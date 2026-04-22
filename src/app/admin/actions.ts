@@ -54,6 +54,19 @@ function getSafeStatus(input: FormDataEntryValue | null): "draft" | "published" 
   return input === "published" ? "published" : "draft";
 }
 
+function buildSummary(input: string): string {
+  const plain = input
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/!\[.*?\]\(.*?\)/g, " ")
+    .replace(/\[(.*?)\]\(.*?\)/g, "$1")
+    .replace(/[#>*_\-\[\]()]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return plain.slice(0, 180);
+}
+
 export async function createPostAction(formData: FormData) {
   const supabase = await createClient();
   const {
@@ -65,15 +78,16 @@ export async function createPostAction(formData: FormData) {
   }
 
   const title = String(formData.get("title") ?? "").trim();
-  const summary = String(formData.get("summary") ?? "").trim();
+  const summaryInput = String(formData.get("summary") ?? "").trim();
   const contentMdx = String(formData.get("contentMdx") ?? "").trim();
   const status = getSafeStatus(formData.get("status"));
   const tags = parseTags(String(formData.get("tags") ?? ""));
 
-  if (!title || !summary || !contentMdx) {
-    redirect("/admin?error=required_fields");
+  if (!title || !contentMdx) {
+    redirect("/admin/new?error=required_fields");
   }
 
+  const summary = summaryInput || buildSummary(contentMdx) || title;
   const slug = await generateUniqueSlug(title);
   const publishedAt = status === "published" ? new Date() : null;
 
@@ -103,5 +117,6 @@ export async function createPostAction(formData: FormData) {
   });
 
   revalidatePath("/admin");
-  redirect(`/admin?success=${status}`);
+  revalidatePath("/admin/new");
+  redirect(`/admin/new?success=${status}`);
 }
