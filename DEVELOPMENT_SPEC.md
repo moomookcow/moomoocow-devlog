@@ -178,8 +178,8 @@
 ## 12) 환경변수 정책
 필수 키:
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY` (server-only)
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_SECRET_KEY` (server-only)
 - `DATABASE_URL`
 - `ADMIN_EMAIL_ALLOWLIST`
 
@@ -190,7 +190,8 @@
 환경 분리 규칙:
 - `dev`, `staging`, `prod`는 서로 다른 데이터 리소스를 사용해야 한다.
 - 운영 환경 비밀키는 CI Secret 또는 배포 플랫폼 Secret에만 저장해야 한다.
-- `SUPABASE_SERVICE_ROLE_KEY`는 클라이언트 코드에서 참조하면 안 된다.
+- `SUPABASE_SECRET_KEY`는 클라이언트 코드에서 참조하면 안 된다.
+- 레거시 `anon/service_role` 키는 전환기 호환용으로만 사용하고 신규 구성은 `publishable/secret`을 기본으로 해야 한다.
 
 ## 13) 어드민 인증/인가 상세 정책
 인증:

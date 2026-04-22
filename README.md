@@ -22,8 +22,8 @@
 | Key | Scope | 설명 |
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | dev/staging/prod | Supabase 프로젝트 URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | dev/staging/prod | Supabase anon public key |
-| `SUPABASE_SERVICE_ROLE_KEY` | server-only | 관리자 작업/서버 작업용 키 |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | dev/staging/prod | Supabase publishable key (`sb_publishable_...`) |
+| `SUPABASE_SECRET_KEY` | server-only | 서버 전용 secret key (`sb_secret_...`) |
 | `DATABASE_URL` | server-only | Prisma용 Postgres 연결 문자열 |
 | `DIRECT_URL` | server-only(optional) | Prisma migrate 전용 direct 연결 문자열 |
 | `ADMIN_EMAIL_ALLOWLIST` | server-only | 어드민 접근 허용 이메일 목록(콤마 구분) |
@@ -32,7 +32,8 @@
 
 참고:
 - 스테이징/프로덕션은 환경별로 Supabase 프로젝트를 분리해야 합니다.
-- `SUPABASE_SERVICE_ROLE_KEY`는 클라이언트 번들에 포함되면 안 됩니다.
+- `SUPABASE_SECRET_KEY`는 클라이언트 번들에 포함되면 안 됩니다.
+- 레거시 키(`anon`, `service_role`)는 호환 기간에만 사용하고 신규 구성은 `publishable/secret`을 기본으로 해야 합니다.
 
 ## 어드민 인증 정책(요약)
 - 초기 정책은 단일 관리자(1인 운영) 기준입니다.
