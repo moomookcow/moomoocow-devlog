@@ -9,9 +9,10 @@ import { createClient } from "@/lib/supabase/server";
 
 function slugify(value: string): string {
   return value
+    .normalize("NFC")
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/[^\p{Letter}\p{Number}\s-]/gu, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
@@ -118,5 +119,10 @@ export async function createPostAction(formData: FormData) {
 
   revalidatePath("/admin");
   revalidatePath("/admin/new");
-  redirect(`/admin/new?success=${status}`);
+
+  if (status === "published") {
+    redirect("/admin");
+  }
+
+  redirect("/admin/new?success=draft");
 }

@@ -187,7 +187,13 @@ export default async function AdminPage() {
                     key={post.id}
                     className="flex items-center justify-between gap-2"
                   >
-                    <span className="truncate">{post.title}</span>
+                    <Link
+                      href={`/admin/posts/${encodeURIComponent(post.slug)}`}
+                      className="truncate text-foreground transition-opacity hover:opacity-80"
+                      title={`${post.title} 조회`}
+                    >
+                      {post.title}
+                    </Link>
                     <Badge
                       variant={
                         post.status === "published" ? "default" : "secondary"

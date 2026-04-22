@@ -1,0 +1,259 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import * as React from "react";
+
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import PostToc from "@/components/admin/post-toc";
+import PostReadingProgress from "@/components/admin/post-reading-progress";
+import { isAdminEmailAllowed } from "@/lib/admin";
+import { db } from "@/lib/db";
+import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/server";
+
+type AdminPostDetailPageProps = {
+  params: Promise<{
+    slug: string;
+  }>;
+};
+
+type TocItem = {
+  id: string;
+  level: 1 | 2 | 3;
+  text: string;
+};
+
+function headingIdify(value: string): string {
+  return value
+    .normalize("NFC")
+    .toLowerCase()
+    .trim()
+    .replace(/[`*_~[\]()]/g, "")
+    .replace(/[^\p{Letter}\p{Number}\s-]/gu, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function stripMarkdownInline(value: string): string {
+  return value
+    .replace(/!\[.*?\]\(.*?\)/g, "")
+    .replace(/\[(.*?)\]\(.*?\)/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\\([<>])/g, "$1")
+    .replace(/<([^>]+)>/g, "$1")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/~~(.*?)~~/g, "$1")
+    .trim();
+}
+
+function estimateReadMinutes(markdown: string): number {
+  const plain = markdown
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/!\[.*?\]\(.*?\)/g, " ")
+    .replace(/\[(.*?)\]\(.*?\)/g, "$1")
+    .replace(/[>#*_~\-|[\]()]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const length = plain.length;
+  if (length === 0) return 1;
+
+  // Approximation for mixed ko/en technical articles.
+  // 450 chars ~= 1 minute.
+  return Math.max(1, Math.ceil(length / 450));
+}
+
+function extractToc(markdown: string): TocItem[] {
+  const lines = markdown.split("\n");
+  const toc: TocItem[] = [];
+
+  for (const line of lines) {
+    const match = line.match(/^\s{0,3}(#{1,3})\s+(.+?)\s*#*\s*$/);
+    if (!match) continue;
+
+    const level = match[1].length as 1 | 2 | 3;
+    const text = stripMarkdownInline(match[2]);
+    if (!text) continue;
+
+    const id = headingIdify(text) || "section";
+
+    toc.push({ id, level, text });
+  }
+
+  return toc;
+}
+
+function safeDecodeURIComponent(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function buildSlugCandidates(rawSlug: string): string[] {
+  const decoded = safeDecodeURIComponent(rawSlug);
+  const candidates = [
+    rawSlug,
+    decoded,
+    rawSlug.normalize("NFC"),
+    rawSlug.normalize("NFD"),
+    decoded.normalize("NFC"),
+    decoded.normalize("NFD"),
+  ];
+
+  return Array.from(new Set(candidates.filter(Boolean)));
+}
+
+function reactNodeToText(node: React.ReactNode): string {
+  if (node === null || node === undefined || typeof node === "boolean") {
+    return "";
+  }
+
+  if (typeof node === "string" || typeof node === "number") {
+    return String(node);
+  }
+
+  if (Array.isArray(node)) {
+    return node.map((child) => reactNodeToText(child)).join("");
+  }
+
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
+    return reactNodeToText(node.props.children);
+  }
+
+  return "";
+}
+
+export default async function AdminPostDetailPage({ params }: AdminPostDetailPageProps) {
+  const { slug: rawSlug } = await params;
+  const slugCandidates = buildSlugCandidates(rawSlug);
+  const nextPath = `/admin/posts/${encodeURIComponent(rawSlug)}`;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(`/admin/login?next=${encodeURIComponent(nextPath)}`);
+  }
+
+  if (!isAdminEmailAllowed(user.email)) {
+    await supabase.auth.signOut();
+    redirect("/admin/login?error=forbidden");
+  }
+
+  const post = await db.post.findFirst({
+    where: { slug: { in: slugCandidates } },
+    include: {
+      tags: {
+        include: {
+          tag: true,
+        },
+      },
+    },
+  });
+
+  if (!post) {
+    notFound();
+  }
+
+  const toc = extractToc(post.contentMdx);
+  const sectionPadding = "px-5 sm:px-6 lg:px-8";
+  const headingWithId = (children: React.ReactNode, level: "h1" | "h2" | "h3") => {
+    const text = stripMarkdownInline(reactNodeToText(children));
+    const id = headingIdify(text) || "section";
+    return React.createElement(level, { id }, children);
+  };
+
+  const updatedLabel = new Intl.DateTimeFormat("ko-KR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(post.updatedAt);
+  const readMinutes = estimateReadMinutes(post.contentMdx);
+
+  return (
+    <>
+      <PostReadingProgress targetId="post-content-scroll" />
+      <main className="mx-auto flex h-[100dvh] w-full max-w-[1800px] min-h-0 flex-col gap-4 overflow-hidden px-4 py-0 sm:px-6 lg:px-8">
+        <Card className="flex min-h-0 flex-1 rounded-none">
+          <CardHeader className={cn("gap-3", sectionPadding)}>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <CardDescription>Admin Post View (Temporary)</CardDescription>
+            <div className="flex items-center gap-2">
+              <CardDescription className="mr-2 hidden text-xs sm:block">
+                마지막 수정: {updatedLabel} · {readMinutes} min read
+              </CardDescription>
+              <Link
+                href="/admin"
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-8 px-3")}
+              >
+                대시보드
+              </Link>
+              <Link
+                href="/admin/new"
+                className={cn(buttonVariants({ variant: "contrast", size: "sm" }), "h-8 px-3")}
+              >
+                새 글 작성
+              </Link>
+            </div>
+          </div>
+          <CardTitle className="font-display text-3xl">{post.title}</CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant={post.status === "published" ? "default" : "secondary"}
+              className="h-8 rounded-md px-2.5 text-sm uppercase"
+            >
+              {post.status}
+            </Badge>
+            {post.tags.map((postTag) => (
+              <Badge
+                key={postTag.tagId}
+                variant="outline"
+                className="h-8 rounded-md px-2.5 text-sm"
+              >
+                #{postTag.tag.name}
+              </Badge>
+            ))}
+          </div>
+          <CardDescription className="text-xs sm:hidden">
+            마지막 수정: {updatedLabel} · {readMinutes} min read
+          </CardDescription>
+        </CardHeader>
+          <CardContent className={cn("min-h-0 flex-1", sectionPadding)}>
+            <div className="grid h-full min-h-0 gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+              <ScrollArea
+                id="post-content-scroll"
+                className="mt-2 h-[calc(100%-0.5rem)] rounded-md bg-[color-mix(in_oklab,var(--background)_94%,white_6%)]"
+              >
+                <article className="md-preview min-h-full bg-[color-mix(in_oklab,var(--background)_92%,white_8%)] p-5">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      h1: ({ children }) => headingWithId(children, "h1"),
+                      h2: ({ children }) => headingWithId(children, "h2"),
+                      h3: ({ children }) => headingWithId(children, "h3"),
+                    }}
+                  >
+                    {post.contentMdx}
+                  </ReactMarkdown>
+                </article>
+              </ScrollArea>
+
+              <PostToc items={toc} />
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+    </>
+  );
+}
