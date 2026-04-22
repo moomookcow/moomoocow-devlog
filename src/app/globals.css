@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
   /* Typography */
@@ -32,19 +36,39 @@
   --motion-normal: 180ms;
 
   /* Hermes-leaning dark-first color tokens */
-  --background: oklch(0.12 0 0);
-  --foreground: oklch(0.93 0.03 55);
-  --card: oklch(0.15 0 0);
+  --background: #000000;
+  --foreground: color(srgb 1 0.901961 0.796078);
+  --card: color-mix(in oklab, var(--background) 88%, white 12%);
   --card-foreground: var(--foreground);
-  --muted: oklch(0.92 0.02 50 / 0.08);
-  --muted-foreground: oklch(0.82 0.02 55);
-  --border: oklch(0.92 0.02 50 / 0.2);
-  --input: oklch(0.92 0.02 50 / 0.2);
-  --ring: oklch(0.85 0.04 58);
-  --primary: oklch(0.92 0.03 56);
-  --primary-foreground: oklch(0.15 0 0);
-  --destructive: oklch(0.62 0.2 25);
-  --destructive-foreground: oklch(0.98 0 0);
+  --muted: oklab(0.938314 0.0158656 0.0420899 / 0.08);
+  --muted-foreground: color-mix(in oklab, var(--foreground) 72%, black 28%);
+  --border: oklab(0.938314 0.0158656 0.0420899 / 0.2);
+  --input: oklab(0.938314 0.0158656 0.0420899 / 0.25);
+  --ring: color-mix(in oklab, var(--foreground) 50%, black 50%);
+  --primary: var(--foreground);
+  --primary-foreground: #000000;
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: #000000;
+  --popover: color-mix(in oklab, var(--background) 92%, white 8%);
+  --popover-foreground: var(--foreground);
+  --secondary: color-mix(in oklab, var(--background) 78%, white 22%);
+  --secondary-foreground: var(--foreground);
+  --accent: color-mix(in oklab, var(--background) 82%, white 18%);
+  --accent-foreground: var(--foreground);
+  --chart-1: color-mix(in oklab, var(--foreground) 85%, black 15%);
+  --chart-2: color-mix(in oklab, var(--foreground) 70%, black 30%);
+  --chart-3: color-mix(in oklab, var(--foreground) 55%, black 45%);
+  --chart-4: color-mix(in oklab, var(--foreground) 40%, black 60%);
+  --chart-5: color-mix(in oklab, var(--foreground) 28%, black 72%);
+  --radius: 0.625rem;
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--foreground);
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 }
 
 @theme inline {
@@ -61,16 +85,41 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --font-sans: var(--font-noto-sans-kr), "Pretendard", "Inter", -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: var(--font-sans);
   --font-display: var(--font-song-myung), "Nanum Myeongjo", "Times New Roman",
     serif;
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 body {
   min-height: 100%;
-  color: var(--foreground);
   background-color: var(--background);
   font-family: var(--font-sans);
   font-size: var(--font-size-base);
@@ -130,21 +179,21 @@ a {
 .md-preview h2,
 .md-preview h3 {
   font-family: var(--font-display);
-  margin: 1.2rem 0 0.6rem;
+  margin: 1.25rem 0 0.7rem;
   line-height: 1.3;
   color: var(--foreground);
 }
 
 .md-preview h1 {
-  font-size: 2rem;
+  font-size: 1.8rem;
 }
 
 .md-preview h2 {
-  font-size: 1.6rem;
+  font-size: 1.45rem;
 }
 
 .md-preview h3 {
-  font-size: 1.3rem;
+  font-size: 1.15rem;
 }
 
 .md-preview p,
@@ -152,7 +201,7 @@ a {
 .md-preview ol,
 .md-preview blockquote,
 .md-preview pre {
-  margin: 0.8rem 0;
+  margin: 0.85rem 0;
   color: var(--foreground);
 }
 
@@ -175,27 +224,64 @@ a {
 }
 
 .md-preview blockquote {
-  border-left: 2px solid var(--border);
-  padding-left: 0.8rem;
+  border-left: 2px solid color-mix(in oklab, var(--foreground) 25%, transparent);
+  padding-left: 0.9rem;
   color: var(--muted-foreground);
 }
 
 .md-preview code {
-  background-color: color-mix(in oklch, var(--muted) 100%, transparent);
+  background-color: color-mix(in oklab, var(--background) 82%, white 18%);
   border-radius: var(--radius-sm);
-  padding: 0.1rem 0.3rem;
+  padding: 0.1rem 0.35rem;
   color: var(--foreground);
 }
 
 .md-preview pre {
-  background-color: color-mix(in oklch, var(--muted) 100%, transparent);
+  background-color: color-mix(in oklab, var(--background) 84%, white 16%);
+  border: 1px solid color-mix(in oklab, var(--foreground) 18%, transparent);
   border-radius: var(--radius-md);
-  padding: 0.8rem;
+  padding: 0.85rem;
   overflow: auto;
+}
+
+.md-preview hr {
+  border: 0;
+  border-top: 1px solid color-mix(in oklab, var(--foreground) 20%, transparent);
+  margin: 1rem 0;
+}
+
+.md-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.9rem 0;
+}
+
+.md-preview th,
+.md-preview td {
+  border: 1px solid color-mix(in oklab, var(--foreground) 18%, transparent);
+  padding: 0.4rem 0.55rem;
+  text-align: left;
 }
 
 .editor-no-focus:focus,
 .editor-no-focus:focus-visible {
   outline: none !important;
   box-shadow: none !important;
+}
+
+.btn-contrast {
+  background-color: var(--foreground);
+  color: var(--background);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }

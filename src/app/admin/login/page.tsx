@@ -1,6 +1,9 @@
 import Link from "next/link";
 
 import LoginForm from "@/components/admin/login-form";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 type AdminLoginPageProps = {
   searchParams?: Promise<{
@@ -22,35 +25,39 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
 
   return (
     <main className="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-6 px-6 py-16 sm:px-10 sm:py-20">
-      <section className="rounded-[var(--radius-lg)] border border-border bg-card p-7 sm:p-10">
-        <p className="font-display mb-2 text-base tracking-wide text-muted-foreground sm:text-lg">
-          Admin Auth
-        </p>
-        <h1 className="font-display text-3xl leading-tight text-foreground sm:text-4xl">
-          관리자 로그인
-        </h1>
-        <p className="mt-4 text-sm text-muted-foreground sm:text-base">
-          Supabase 이메일 로그인 링크로 인증합니다. 로그인 후 allowlist 검사에
-          통과한 계정만 `/admin`에 접근할 수 있습니다.
-        </p>
+      <Card className="rounded-lg">
+        <CardHeader>
+          <CardDescription className="font-display text-base tracking-wide sm:text-lg">
+            Admin Auth
+          </CardDescription>
+          <CardTitle className="font-display text-3xl leading-tight sm:text-4xl">
+            관리자 로그인
+          </CardTitle>
+          <CardDescription className="mt-2 text-sm sm:text-base">
+            Supabase 이메일 로그인 링크로 인증합니다. 로그인 후 allowlist 검사에 통과한 계정만
+            `/admin`에 접근할 수 있습니다.
+          </CardDescription>
+        </CardHeader>
 
-        {errorMessage ? (
-          <p className="mt-4 text-sm text-destructive" role="alert">
-            {errorMessage}
-          </p>
-        ) : null}
+        <CardContent>
+          {errorMessage ? (
+            <p className="mb-4 text-sm text-destructive" role="alert">
+              {errorMessage}
+            </p>
+          ) : null}
 
-        <LoginForm nextPath={next} />
+          <LoginForm nextPath={next} />
 
-        <div className="mt-5">
-          <Link
-            className="inline-flex h-11 items-center justify-center rounded-[var(--radius-md)] border border-border px-5 text-sm font-medium text-foreground transition-colors duration-[var(--motion-normal)] hover:bg-muted"
-            href="/"
-          >
-            홈으로 돌아가기
-          </Link>
-        </div>
-      </section>
+          <div className="mt-5">
+            <Link
+              className={cn(buttonVariants({ variant: "outline" }), "h-11 rounded-md px-5 text-foreground")}
+              href="/"
+            >
+              홈으로 돌아가기
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </main>
   );
 }

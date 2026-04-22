@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Noto_Sans_KR, Song_Myung } from "next/font/google";
+import { Geist_Mono, Noto_Sans_KR, Song_Myung, Geist } from "next/font/google";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const notoSansKr = Noto_Sans_KR({
   variable: "--font-noto-sans-kr",
@@ -33,7 +36,13 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${notoSansKr.variable} ${songMyung.variable} ${geistMono.variable} h-full antialiased`}
+      className={cn(
+        "dark h-full antialiased font-sans",
+        notoSansKr.variable,
+        songMyung.variable,
+        geistMono.variable,
+        geist.variable,
+      )}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

@@ -2,6 +2,8 @@
 
 import { FormEvent, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 
 type LoginFormProps = {
@@ -45,25 +47,26 @@ export default function LoginForm({ nextPath = "/admin" }: LoginFormProps) {
       <label className="text-sm text-muted-foreground" htmlFor="email">
         관리자 이메일
       </label>
-      <input
+      <Input
         id="email"
         name="email"
         type="email"
         autoComplete="email"
         required
-        className="h-11 rounded-[var(--radius-md)] border border-input bg-transparent px-3 text-sm text-foreground"
+        className="h-11 rounded-md text-sm"
         placeholder="you@example.com"
         value={email}
         onChange={(event) => setEmail(event.target.value)}
       />
 
-      <button
-        className="inline-flex h-11 items-center justify-center rounded-[var(--radius-md)] bg-primary px-5 text-sm font-medium text-primary-foreground transition-opacity duration-[var(--motion-normal)] hover:opacity-90 disabled:opacity-70"
+      <Button
+        variant="contrast"
+        className="h-11 rounded-md px-5 text-sm"
         type="submit"
         disabled={loading}
       >
         {loading ? "메일 발송 중..." : "이메일로 로그인 링크 받기"}
-      </button>
+      </Button>
 
       {notice ? <p className="text-sm text-muted-foreground">{notice}</p> : null}
       {error ? (

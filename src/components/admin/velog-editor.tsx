@@ -1,9 +1,17 @@
 "use client";
 
-import { useRef, useState } from "react";
+import Link from "next/link";
+import { KeyboardEvent, useRef, useState } from "react";
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 
 type VelogEditorProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -40,7 +48,10 @@ function surroundSelection(
 
 export default function VelogEditor({ action }: VelogEditorProps) {
   const [content, setContent] = useState("");
+  const [tagInput, setTagInput] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const tagComposingRef = useRef(false);
 
   function withEditorSelection(
     handler: (start: number, end: number, value: string) => void,
@@ -173,105 +184,162 @@ export default function VelogEditor({ action }: VelogEditorProps) {
     });
   }
 
+  function normalizeTag(raw: string): string {
+    return raw.trim().replace(/^#+/, "");
+  }
+
+  function addTag(raw: string) {
+    const normalized = normalizeTag(raw);
+    if (!normalized) return;
+    setTags((prev) => (prev.includes(normalized) ? prev : [...prev, normalized]));
+  }
+
+  function removeTag(target: string) {
+    setTags((prev) => prev.filter((tag) => tag !== target));
+  }
+
+  function onTagKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (tagComposingRef.current) return;
+
+    if (event.key === "Enter" || event.key === ",") {
+      event.preventDefault();
+      addTag(tagInput);
+      setTagInput("");
+      return;
+    }
+
+    if (event.key === "Backspace" && tagInput.length === 0 && tags.length > 0) {
+      event.preventDefault();
+      setTags((prev) => prev.slice(0, -1));
+    }
+  }
+
+  function onTagBlur() {
+    if (!tagInput.trim()) return;
+    addTag(tagInput);
+    setTagInput("");
+  }
+
   return (
-    <form action={action} className="flex h-full min-h-0 flex-col gap-3">
-      <input
+    <form action={action} className="flex h-full min-h-0 flex-col gap-3.5">
+      <Input
         name="title"
         required
-        className="editor-title-input editor-no-focus h-18 border-b border-border bg-transparent px-1 text-4xl font-semibold text-foreground outline-none placeholder:text-muted-foreground sm:text-5xl"
+        className="editor-title-input editor-no-focus h-20 rounded-none border-0 bg-background px-1 text-4xl font-semibold text-foreground shadow-none ring-0 placeholder:text-muted-foreground/80 focus-visible:border-transparent focus-visible:ring-0 dark:bg-background sm:text-5xl"
         placeholder="제목을 입력하세요"
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+          }
+        }}
       />
 
-      <input
-        name="tags"
-        className="editor-tags-input editor-no-focus h-11 border-b border-border bg-transparent px-1 text-sm text-foreground outline-none placeholder:text-muted-foreground"
-        placeholder="태그를 입력하세요 (Enter/쉼표로 추가)"
-      />
+      <div className="flex min-h-12 flex-wrap items-center gap-2 bg-background px-1 py-1.5">
+        {tags.map((tag) => (
+          <Badge
+            key={tag}
+            variant="outline"
+            className="h-8 cursor-pointer rounded-md border-foreground/25 px-2.5 text-sm text-foreground hover:bg-muted/80"
+            onClick={() => removeTag(tag)}
+            title="클릭해서 태그 제거"
+          >
+            #{tag}
+          </Badge>
+        ))}
+
+        <Input
+          value={tagInput}
+          onChange={(event) => setTagInput(event.target.value)}
+          onKeyDown={onTagKeyDown}
+          onBlur={onTagBlur}
+          onCompositionStart={() => {
+            tagComposingRef.current = true;
+          }}
+          onCompositionEnd={() => {
+            tagComposingRef.current = false;
+          }}
+          className="editor-tags-input editor-no-focus h-10 min-w-48 flex-1 rounded-none border-0 bg-background px-1 text-sm text-foreground shadow-none ring-0 placeholder:text-muted-foreground/80 focus-visible:border-transparent focus-visible:ring-0 dark:bg-background"
+          placeholder="태그를 입력하세요 (Enter/쉼표로 추가)"
+        />
+      </div>
+
+      <input name="tags" type="hidden" value={tags.join(",")} readOnly />
 
       <input name="summary" type="hidden" value="" readOnly />
 
-      <div className="editor-shell min-h-0 flex-1 overflow-hidden rounded-[var(--radius-lg)] border border-border">
-        <div className="flex flex-wrap gap-2 border-b border-border bg-card px-3 py-2 text-xs text-muted-foreground">
-          <button type="button" onClick={onBold} className="rounded border border-border px-2 py-1">B</button>
-          <button type="button" onClick={onItalic} className="rounded border border-border px-2 py-1">I</button>
-          <button type="button" onClick={onStrike} className="rounded border border-border px-2 py-1">S</button>
-          <button type="button" onClick={() => onHeading(1)} className="rounded border border-border px-2 py-1">H1</button>
-          <button type="button" onClick={() => onHeading(2)} className="rounded border border-border px-2 py-1">H2</button>
-          <button type="button" onClick={() => onHeading(3)} className="rounded border border-border px-2 py-1">H3</button>
-          <button type="button" onClick={onLink} className="rounded border border-border px-2 py-1">Link</button>
-          <button type="button" onClick={onImage} className="rounded border border-border px-2 py-1">Image</button>
-          <button type="button" onClick={onQuote} className="rounded border border-border px-2 py-1">Quote</button>
-          <button type="button" onClick={onBulletList} className="rounded border border-border px-2 py-1">UL</button>
-          <button type="button" onClick={onOrderedList} className="rounded border border-border px-2 py-1">OL</button>
-          <button type="button" onClick={onInlineCode} className="rounded border border-border px-2 py-1">Code</button>
-          <button type="button" onClick={onCodeBlock} className="rounded border border-border px-2 py-1">Code Block</button>
-          <button type="button" onClick={onTable} className="rounded border border-border px-2 py-1">Table</button>
-          <button type="button" onClick={onHr} className="rounded border border-border px-2 py-1">HR</button>
+      <div className="editor-shell relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-border/90 bg-[color-mix(in_oklab,var(--background)_94%,white_6%)]">
+        <div className="sticky top-0 z-10 flex flex-wrap gap-2 border-b border-border/80 bg-[color-mix(in_oklab,var(--background)_90%,white_10%)] px-3 py-2 text-xs text-muted-foreground">
+          <Button type="button" variant="ghost" size="xs" className="text-foreground/85 hover:bg-muted/70 hover:text-foreground" onClick={onBold}>B</Button>
+          <Button type="button" variant="ghost" size="xs" className="text-foreground/85 hover:bg-muted/70 hover:text-foreground" onClick={onItalic}>I</Button>
+          <Button type="button" variant="ghost" size="xs" className="text-foreground/85 hover:bg-muted/70 hover:text-foreground" onClick={onStrike}>S</Button>
+          <Button type="button" variant="ghost" size="xs" className="text-foreground/85 hover:bg-muted/70 hover:text-foreground" onClick={() => onHeading(1)}>H1</Button>
+          <Button type="button" variant="ghost" size="xs" className="text-foreground/85 hover:bg-muted/70 hover:text-foreground" onClick={() => onHeading(2)}>H2</Button>
+          <Button type="button" variant="ghost" size="xs" className="text-foreground/85 hover:bg-muted/70 hover:text-foreground" onClick={() => onHeading(3)}>H3</Button>
+          <Button type="button" variant="ghost" size="xs" className="text-foreground/85 hover:bg-muted/70 hover:text-foreground" onClick={onLink}>Link</Button>
+          <Button type="button" variant="ghost" size="xs" className="text-foreground/85 hover:bg-muted/70 hover:text-foreground" onClick={onImage}>Image</Button>
+          <Button type="button" variant="ghost" size="xs" className="text-foreground/85 hover:bg-muted/70 hover:text-foreground" onClick={onQuote}>Quote</Button>
+          <Button type="button" variant="ghost" size="xs" className="text-foreground/85 hover:bg-muted/70 hover:text-foreground" onClick={onBulletList}>UL</Button>
+          <Button type="button" variant="ghost" size="xs" className="text-foreground/85 hover:bg-muted/70 hover:text-foreground" onClick={onOrderedList}>OL</Button>
+          <Button type="button" variant="ghost" size="xs" className="text-foreground/85 hover:bg-muted/70 hover:text-foreground" onClick={onInlineCode}>Code</Button>
+          <Button type="button" variant="ghost" size="xs" className="text-foreground/85 hover:bg-muted/70 hover:text-foreground" onClick={onCodeBlock}>Code Block</Button>
+          <Button type="button" variant="ghost" size="xs" className="text-foreground/85 hover:bg-muted/70 hover:text-foreground" onClick={onTable}>Table</Button>
+          <Button type="button" variant="ghost" size="xs" className="text-foreground/85 hover:bg-muted/70 hover:text-foreground" onClick={onHr}>HR</Button>
         </div>
 
-        <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-2">
-          <textarea
-            ref={textareaRef}
-            id="contentMdx"
-            name="contentMdx"
-            required
-            value={content}
-            onChange={(event) => setContent(event.target.value)}
-            className="editor-main-textarea editor-no-focus h-[42vh] resize-y border-b border-border bg-[color-mix(in_oklch,var(--background)_92%,white_8%)] p-5 font-mono text-[15px] leading-7 outline-none lg:h-full lg:resize-none lg:border-b-0 lg:border-r"
-            placeholder="마크다운으로 글을 작성하세요"
-          />
+        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-2">
+          <ScrollArea className="h-full border-b border-border/80 bg-[color-mix(in_oklab,var(--background)_90%,white_10%)] lg:border-b-0 lg:border-r lg:border-r-border/80">
+            <Textarea
+              ref={textareaRef}
+              id="contentMdx"
+              name="contentMdx"
+              required
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
+              className="editor-main-textarea editor-no-focus min-h-full h-full resize-none rounded-none border-0 bg-transparent p-5 font-mono text-[15px] leading-7 text-foreground shadow-none ring-0 placeholder:text-muted-foreground/80 focus-visible:border-transparent focus-visible:ring-0"
+              placeholder="마크다운으로 글을 작성하세요"
+            />
+          </ScrollArea>
 
-          <article className="md-preview h-[42vh] overflow-y-auto p-6 text-[15px] leading-7 lg:h-full">
-            {content.trim().length === 0 ? (
-              <p className="text-sm text-muted-foreground">오른쪽 미리보기가 여기에 표시됩니다.</p>
-            ) : (
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  h1: ({ children }) => <h1>{children}</h1>,
-                  h2: ({ children }) => <h2>{children}</h2>,
-                  h3: ({ children }) => <h3>{children}</h3>,
-                  p: ({ children }) => <p>{children}</p>,
-                  ul: ({ children }) => <ul>{children}</ul>,
-                  ol: ({ children }) => <ol>{children}</ol>,
-                  li: ({ children }) => <li>{children}</li>,
-                  blockquote: ({ children }) => <blockquote>{children}</blockquote>,
-                  code: ({ children }) => <code>{children}</code>,
-                  pre: ({ children }) => <pre>{children}</pre>,
-                }}
-              >
-                {content}
-              </ReactMarkdown>
-            )}
-          </article>
+          <ScrollArea className="h-full bg-[color-mix(in_oklab,var(--background)_95%,white_5%)]">
+            <article className="md-preview p-6 text-[15px] leading-7 text-foreground">
+              {content.trim().length === 0 ? (
+                <p className="text-sm text-muted-foreground">오른쪽 미리보기가 여기에 표시됩니다.</p>
+              ) : (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    h1: ({ children }) => <h1>{children}</h1>,
+                    h2: ({ children }) => <h2>{children}</h2>,
+                    h3: ({ children }) => <h3>{children}</h3>,
+                    p: ({ children }) => <p>{children}</p>,
+                    ul: ({ children }) => <ul>{children}</ul>,
+                    ol: ({ children }) => <ol>{children}</ol>,
+                    li: ({ children }) => <li>{children}</li>,
+                    blockquote: ({ children }) => <blockquote>{children}</blockquote>,
+                    code: ({ children }) => <code>{children}</code>,
+                    pre: ({ children }) => <pre>{children}</pre>,
+                  }}
+                >
+                  {content}
+                </ReactMarkdown>
+              )}
+            </article>
+          </ScrollArea>
         </div>
       </div>
 
       <div className="flex items-center justify-between pt-3">
-        <a
-          className="inline-flex h-10 items-center justify-center rounded-[var(--radius-md)] border border-border px-4 text-sm text-foreground transition-colors duration-[var(--motion-normal)] hover:bg-muted"
-          href="/admin"
-        >
+        <Link className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-10 px-4")} href="/admin">
           ← 나가기
-        </a>
+        </Link>
 
         <div className="flex items-center gap-2">
-        <button
-          className="inline-flex h-10 items-center justify-center rounded-[var(--radius-md)] border border-border px-4 text-sm font-medium text-foreground transition-colors duration-[var(--motion-normal)] hover:bg-muted"
-          type="submit"
-          name="status"
-          value="draft"
-        >
-          임시저장
-        </button>
-        <button
-          className="inline-flex h-10 items-center justify-center rounded-[var(--radius-md)] bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity duration-[var(--motion-normal)] hover:opacity-90"
-          type="submit"
-          name="status"
-          value="published"
-        >
-          출간하기
-        </button>
+          <Button className="h-10 px-4" variant="outline" type="submit" name="status" value="draft">
+            임시저장
+          </Button>
+          <Button className="h-10 px-4" variant="contrast" type="submit" name="status" value="published">
+            출간하기
+          </Button>
         </div>
       </div>
     </form>
