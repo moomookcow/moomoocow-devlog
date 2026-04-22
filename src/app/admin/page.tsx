@@ -15,6 +15,7 @@ export default async function AdminPage() {
   }
 
   if (!isAdminEmailAllowed(user.email)) {
+    await supabase.auth.signOut();
     redirect("/admin/login?error=forbidden");
   }
 
