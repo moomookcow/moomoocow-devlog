@@ -1,0 +1,107 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+import { isAdminEmailAllowed } from "@/lib/admin";
+import { db } from "@/lib/db";
+import { createClient } from "@/lib/supabase/server";
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+async function generateUniqueSlug(title: string): Promise<string> {
+  const base = slugify(title) || `post-${Date.now()}`;
+  let slug = base;
+  let index = 2;
+
+  // Keep querying until we find an unused slug.
+  // This is sufficient for current single-admin workflow.
+  while (await db.post.findUnique({ where: { slug } })) {
+    slug = `${base}-${index}`;
+    index += 1;
+  }
+
+  return slug;
+}
+
+function parseTags(raw: string): Array<{ name: string; slug: string }> {
+  const unique = new Map<string, { name: string; slug: string }>();
+
+  raw
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .forEach((name) => {
+      const slug = slugify(name);
+      if (!slug) return;
+      if (!unique.has(slug)) {
+        unique.set(slug, { name, slug });
+      }
+    });
+
+  return Array.from(unique.values());
+}
+
+function getSafeStatus(input: FormDataEntryValue | null): "draft" | "published" {
+  return input === "published" ? "published" : "draft";
+}
+
+export async function createPostAction(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user || !isAdminEmailAllowed(user.email)) {
+    redirect("/admin/login?error=forbidden");
+  }
+
+  const title = String(formData.get("title") ?? "").trim();
+  const summary = String(formData.get("summary") ?? "").trim();
+  const contentMdx = String(formData.get("contentMdx") ?? "").trim();
+  const status = getSafeStatus(formData.get("status"));
+  const tags = parseTags(String(formData.get("tags") ?? ""));
+
+  if (!title || !summary || !contentMdx) {
+    redirect("/admin?error=required_fields");
+  }
+
+  const slug = await generateUniqueSlug(title);
+  const publishedAt = status === "published" ? new Date() : null;
+
+  await db.post.create({
+    data: {
+      title,
+      summary,
+      contentMdx,
+      slug,
+      status,
+      publishedAt,
+      authorId: user.id,
+      tags: {
+        create: tags.map((tag) => ({
+          tag: {
+            connectOrCreate: {
+              where: { slug: tag.slug },
+              create: {
+                name: tag.name,
+                slug: tag.slug,
+              },
+            },
+          },
+        })),
+      },
+    },
+  });
+
+  revalidatePath("/admin");
+  redirect(`/admin?success=${status}`);
+}

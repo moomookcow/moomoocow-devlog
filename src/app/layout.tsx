@@ -11,7 +11,6 @@ const notoSansKr = Noto_Sans_KR({
 
 const songMyung = Song_Myung({
   variable: "--font-song-myung",
-  subsets: ["latin"],
   weight: "400",
   display: "swap",
 });

@@ -1,7 +1,8 @@
-import { loadEnvConfig } from "@next/env";
+import { config as loadDotenv } from "dotenv";
 import { defineConfig } from "prisma/config";
 
-loadEnvConfig(process.cwd());
+loadDotenv({ path: ".env.local" });
+loadDotenv();
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
