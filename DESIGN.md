@@ -73,25 +73,93 @@
 - 기본 인터랙션 duration은 120ms~200ms 범위여야 한다.
 - `prefers-reduced-motion` 환경에서는 모션을 축소/비활성화해야 한다.
 
-## 4) Library and Implementation Rules
+## 4) Token Draft (Hermes-leaning)
+아래 값은 벤치마크 무드를 최대한 유지하기 위한 초기 토큰 초안이다.  
+실제 구현 시작점으로 사용하고, 접근성 검증 결과에 따라 미세 조정해야 한다.
 
-### 4-1. shadcn/ui
+```css
+:root {
+  /* Typography */
+  --font-sans: "Mondwest", "Inter", "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+
+  --font-size-xs: 0.625rem;   /* ~10px */
+  --font-size-sm: 0.8125rem;  /* ~13px */
+  --font-size-base: 0.875rem; /* 14px */
+  --font-size-lg: 0.9375rem;  /* 15px */
+  --font-size-xl: 1rem;       /* 16px */
+  --font-size-2xl: 2.25rem;   /* 36px */
+  --font-size-3xl: 2.75rem;   /* 확장 단계 */
+  --line-height-base: 1.5;    /* 21px@14px */
+
+  /* Spacing (4px grid + Hermes rhythm) */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 0.875rem; /* 14px (Hermes rhythm) */
+  --space-5: 1rem;     /* 16px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-7: 1.75rem;  /* 28px (Hermes rhythm) */
+  --space-8: 2rem;     /* 32px */
+
+  /* Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+
+  /* Motion */
+  --motion-instant: 150ms;
+  --motion-fast: 120ms;
+  --motion-normal: 180ms;
+
+  /* Color (dark-first, Hermes-inspired) */
+  --background: oklch(0.12 0 0);
+  --foreground: oklch(0.93 0.03 55);
+
+  --card: oklch(0.15 0 0);
+  --card-foreground: var(--foreground);
+
+  --muted: oklch(0.92 0.02 50 / 0.08);
+  --muted-foreground: oklch(0.82 0.02 55);
+
+  --border: oklch(0.92 0.02 50 / 0.20);
+  --input: oklch(0.92 0.02 50 / 0.20);
+  --ring: oklch(0.85 0.04 58);
+
+  --primary: oklch(0.92 0.03 56);
+  --primary-foreground: oklch(0.15 0 0);
+
+  --destructive: oklch(0.62 0.2 25);
+  --destructive-foreground: oklch(0.98 0 0);
+}
+```
+
+### 4-1. Hermes Mapping Notes
+- `font.size.base=14px`, `lineHeight=21px`는 `--font-size-base`, `--line-height-base`로 반영해야 한다.
+- `space.1=14px`, `space.2=28px`는 `--space-4`, `--space-7`로 보조 리듬에 반영해야 한다.
+- `motion.duration.instant=150ms`는 `--motion-instant`로 고정해야 한다.
+- Hermes의 밝은 텍스트/어두운 표면 대비는 `--foreground`/`--background` 조합으로 유지해야 한다.
+- 매우 큰 radius는 그대로 복제하지 말고, 제품 사용성에 맞는 `sm/md/lg` 체계로 정규화해야 한다.
+
+## 5) Library and Implementation Rules
+
+### 5-1. shadcn/ui
 - shadcn/ui는 "시작점"으로 사용해야 하며, 소스 코드를 로컬에서 수정 가능해야 한다.
 - 컴포넌트는 `src/components/ui` 하위에서 관리해야 한다.
 
-### 4-2. Radix Primitives
+### 5-2. Radix Primitives
 - Dialog, Dropdown, Select, Tabs 등 복합 인터랙션은 Radix 기반으로 구현해야 한다.
 - 키보드 내비게이션/포커스 트랩/ARIA 동작을 훼손하면 안 된다.
 
-### 4-3. Tailwind CSS
+### 5-3. Tailwind CSS
 - Tailwind 유틸리티 + CSS 변수 토큰 조합을 기본으로 사용해야 한다.
 - 반복되는 스타일은 컴포넌트/유틸 레벨로 추출해야 한다.
 
-### 4-4. CVA
+### 5-4. CVA
 - 변형이 있는 컴포넌트(Button/Input/Badge/Alert)는 CVA로 variant를 정의해야 한다.
 - 최소 variant 축은 `size`, `intent`, `state`를 고려해야 한다.
 
-## 5) Component Rules
+## 6) Component Rules
 모든 인터랙티브 컴포넌트는 아래 상태를 반드시 정의해야 한다.
 
 - default
@@ -109,33 +177,33 @@
 - Responsive: 모바일 우선이며 `mobile/tablet/desktop` 3단계를 보장해야 한다.
 - Edge cases: 긴 제목/긴 태그/긴 코드 블록에서도 깨지지 않아야 하며 Empty/Loading/Error 상태를 제공해야 한다.
 
-## 6) Accessibility Requirements
+## 7) Accessibility Requirements
 
-### 6-1. Non-negotiable
+### 7-1. Non-negotiable
 - 모든 페이지는 키보드만으로 주요 플로우 탐색이 가능해야 한다.
 - `:focus-visible`은 항상 시각적으로 명확해야 한다.
 - 텍스트 대비는 WCAG 2.2 AA를 충족해야 한다.
 - 모든 입력 필드는 label 또는 동등한 접근성 이름을 가져야 한다.
 
-### 6-2. Pass/Fail Checks
+### 7-2. Pass/Fail Checks
 - Pass: 마우스 없이 포스트 작성(어드민) 및 포스트 탐색(공개 페이지) 완료 가능
 - Pass: 모달/드롭다운 닫힘 시 트리거로 포커스 복귀
 - Pass: 오류 메시지와 필드 연결(`aria-describedby`)
 - Fail: placeholder만 있고 label이 없는 입력
 - Fail: 배경과 구분 안 되는 focus ring
 
-## 7) Content and Tone Standards
+## 8) Content and Tone Standards
 - 문장 톤은 concise, confident, implementation-focused 여야 한다.
 - 액션 라벨은 동사 중심으로 명확해야 한다.
 - 모호한 라벨("확인", "처리", "클릭")은 금지해야 한다.
 
-## 8) Anti-Patterns
+## 9) Anti-Patterns
 - raw hex 직사용 금지
 - semantic element 대체(div/button role 남용) 금지
 - `outline: none` 단독 사용 금지
 - 임의 타이포/간격 예외 추가 금지
 
-## 9) QA Checklist
+## 10) QA Checklist
 - [ ] 토큰 외 색상/간격/반경 직사용이 없는가?
 - [ ] 모든 인터랙티브 컴포넌트 상태(default~error)가 정의되었는가?
 - [ ] 키보드 접근성과 focus-visible이 검증되었는가?
@@ -143,7 +211,7 @@
 - [ ] Empty/Loading/Error 상태가 구현되었는가?
 - [ ] 공개/어드민이 동일 토큰 체계를 공유하는가?
 
-## 10) Quality Gates
+## 11) Quality Gates
 - 모든 non-negotiable rule 문장은 "must"로 작성해야 한다.
 - 모든 recommendation 문장은 "should"로 작성해야 한다.
 - 접근성 규칙은 구현에서 pass/fail 테스트 가능해야 한다.
