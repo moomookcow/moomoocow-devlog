@@ -15,6 +15,19 @@ function getSupabasePublicEnv() {
 }
 
 export async function middleware(request: NextRequest) {
+  const requestUrl = new URL(request.url);
+  const hasAuthCode = requestUrl.searchParams.has("code");
+  const hasOtpToken =
+    requestUrl.searchParams.has("token_hash") && requestUrl.searchParams.has("type");
+
+  if ((hasAuthCode || hasOtpToken) && requestUrl.pathname !== "/auth/confirm") {
+    const confirmUrl = new URL("/auth/confirm", request.url);
+    requestUrl.searchParams.forEach((value, key) => {
+      confirmUrl.searchParams.set(key, value);
+    });
+    return NextResponse.redirect(confirmUrl);
+  }
+
   let response = NextResponse.next({
     request,
   });
@@ -58,4 +71,3 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
-
