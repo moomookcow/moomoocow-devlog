@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { isAdminEmailAllowed } from "@/lib/admin";
+import { requireAdminOrRedirect } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
@@ -19,18 +18,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/admin/login?next=/admin");
-  }
-
-  if (!isAdminEmailAllowed(user.email)) {
-    await supabase.auth.signOut();
-    redirect("/admin/login?error=forbidden");
-  }
+  const user = await requireAdminOrRedirect(supabase, "/admin");
 
   const [posts, tags] = await Promise.all([
     db.post.findMany({

@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
-
-import { isAdminEmailAllowed } from "@/lib/admin";
+import { requireAdminOrRedirect } from "@/lib/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 
 import VelogEditor from "@/components/admin/velog-editor";
@@ -27,18 +25,7 @@ const SUCCESS_MESSAGE: Record<string, string> = {
 
 export default async function AdminNewPage({ searchParams }: AdminNewPageProps) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/admin/login?next=/admin/new");
-  }
-
-  if (!isAdminEmailAllowed(user.email)) {
-    await supabase.auth.signOut();
-    redirect("/admin/login?error=forbidden");
-  }
+  await requireAdminOrRedirect(supabase, "/admin/new");
 
   const params = searchParams ? await searchParams : undefined;
   const errorMessage = params?.error ? ERROR_MESSAGE[params.error] : null;

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import * as React from "react";
 
 import ReactMarkdown from "react-markdown";
@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area";
 import PostToc from "@/components/admin/post-toc";
 import PostReadingProgress from "@/components/admin/post-reading-progress";
-import { isAdminEmailAllowed } from "@/lib/admin";
+import { requireAdminOrRedirect } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
@@ -138,21 +138,10 @@ function reactNodeToText(node: React.ReactNode): string {
 export default async function AdminPostDetailPage({ params }: AdminPostDetailPageProps) {
   const { slug: rawSlug } = await params;
   const slugCandidates = buildSlugCandidates(rawSlug);
-  const nextPath = `/admin/posts/${encodeURIComponent(rawSlug)}`;
+  const nextPath = `/admin/posts/${rawSlug}`;
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect(`/admin/login?next=${encodeURIComponent(nextPath)}`);
-  }
-
-  if (!isAdminEmailAllowed(user.email)) {
-    await supabase.auth.signOut();
-    redirect("/admin/login?error=forbidden");
-  }
+  await requireAdminOrRedirect(supabase, nextPath);
 
   const post = await db.post.findFirst({
     where: { slug: { in: slugCandidates } },
