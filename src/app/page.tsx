@@ -1,15 +1,12 @@
 import Link from "next/link";
-import type { Prisma } from "@prisma/client";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
 
-type HomePost = Prisma.PostGetPayload<Prisma.PostDefaultArgs>;
-
 export default async function Home() {
-  const latestPosts: HomePost[] = await db.post.findMany({
+  const latestPosts = await db.post.findMany({
     where: {
       status: "published",
       deletedAt: null,
@@ -71,7 +68,7 @@ export default async function Home() {
             </CardContent>
           </Card>
         ) : (
-          latestPosts.map((post) => (
+          latestPosts.map((post: (typeof latestPosts)[number]) => (
             <Card key={post.id} className="rounded-lg">
               <CardHeader className="gap-2">
                 <CardTitle className="text-2xl">

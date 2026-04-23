@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import type { Prisma } from "@prisma/client";
 import * as React from "react";
 
 import ReactMarkdown from "react-markdown";
@@ -28,17 +27,6 @@ type TocItem = {
   level: 1 | 2 | 3;
   text: string;
 };
-
-type AdminDetailPost = Prisma.PostGetPayload<{
-  include: {
-    tags: {
-      include: {
-        tag: true;
-      };
-    };
-  };
-}>;
-type AdminDetailTagRelation = AdminDetailPost["tags"][number];
 
 function headingIdify(value: string): string {
   return value
@@ -164,7 +152,7 @@ export default async function AdminPostDetailPage({ params }: AdminPostDetailPag
     redirect("/admin/login?error=forbidden");
   }
 
-  const post: AdminDetailPost | null = await db.post.findFirst({
+  const post = await db.post.findFirst({
     where: { slug: { in: slugCandidates } },
     include: {
       tags: {
@@ -227,7 +215,7 @@ export default async function AdminPostDetailPage({ params }: AdminPostDetailPag
             >
               {post.status}
             </Badge>
-            {post.tags.map((postTag: AdminDetailTagRelation) => (
+            {post.tags.map((postTag: (typeof post.tags)[number]) => (
               <Badge
                 key={postTag.tagId}
                 variant="outline"

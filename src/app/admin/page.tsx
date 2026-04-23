@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import type { Prisma } from "@prisma/client";
 
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -15,22 +14,6 @@ import { isAdminEmailAllowed } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
-
-type AdminPost = Prisma.PostGetPayload<{
-  include: {
-    tags: {
-      include: {
-        tag: true;
-      };
-    };
-  };
-}>;
-
-type AdminTag = Prisma.TagGetPayload<{
-  include: {
-    posts: true;
-  };
-}>;
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -47,7 +30,7 @@ export default async function AdminPage() {
     redirect("/admin/login?error=forbidden");
   }
 
-  const [posts, tags]: [AdminPost[], AdminTag[]] = await Promise.all([
+  const [posts, tags] = await Promise.all([
     db.post.findMany({
       take: 8,
       orderBy: { updatedAt: "desc" },
@@ -69,11 +52,11 @@ export default async function AdminPage() {
   ]);
 
   const publishedCount = posts.filter(
-    (post) => post.status === "published",
+    (post: (typeof posts)[number]) => post.status === "published",
   ).length;
-  const draftCount = posts.filter((post) => post.status === "draft").length;
+  const draftCount = posts.filter((post: (typeof posts)[number]) => post.status === "draft").length;
   const popularPosts = posts
-    .filter((post) => post.status === "published")
+    .filter((post: (typeof posts)[number]) => post.status === "published")
     .slice(0, 5);
 
   return (
@@ -151,7 +134,7 @@ export default async function AdminPage() {
               </p>
             ) : (
               <ul className="space-y-2 text-sm">
-                {tags.map((tag) => (
+                {tags.map((tag: (typeof tags)[number]) => (
                   <li
                     key={tag.id}
                     className="flex items-center justify-between gap-2"
@@ -178,7 +161,7 @@ export default async function AdminPage() {
               </p>
             ) : (
               <ul className="space-y-2 text-sm">
-                {popularPosts.map((post) => (
+                {popularPosts.map((post: (typeof popularPosts)[number]) => (
                   <li key={post.id} className="truncate">
                     {post.title}
                   </li>
@@ -199,7 +182,7 @@ export default async function AdminPage() {
               </p>
             ) : (
               <ul className="space-y-2 text-sm">
-                {posts.map((post) => (
+                {posts.map((post: (typeof posts)[number]) => (
                   <li
                     key={post.id}
                     className="flex items-center justify-between gap-2"
