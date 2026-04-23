@@ -76,6 +76,7 @@ export default async function AdminPage() {
           <div className="flex items-center gap-2">
             <Link
               href="/admin/new"
+              prefetch={false}
               className={cn(buttonVariants({ variant: "contrast" }), "h-9 rounded-md px-4")}
             >
               새 글 작성
