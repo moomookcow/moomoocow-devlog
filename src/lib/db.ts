@@ -1,8 +1,4 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-// Some environments (e.g. CI/Vercel before prisma generate) can momentarily fail
-// to resolve this named export at type-check time. Runtime still works after generate.
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 
