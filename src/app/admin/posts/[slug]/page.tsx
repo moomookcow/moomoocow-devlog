@@ -16,6 +16,8 @@ import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 type AdminPostDetailPageProps = {
   params: Promise<{
     slug: string;

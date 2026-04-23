@@ -7,6 +7,8 @@ import VelogEditor from "@/components/admin/velog-editor";
 
 import { createPostAction } from "../actions";
 
+export const dynamic = "force-dynamic";
+
 type AdminNewPageProps = {
   searchParams?: Promise<{
     error?: string;
