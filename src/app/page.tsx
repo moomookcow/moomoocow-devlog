@@ -2,11 +2,21 @@ import Link from "next/link";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
 
-export default function Home() {
+export default async function Home() {
+  const latestPosts = await db.post.findMany({
+    where: {
+      status: "published",
+      deletedAt: null,
+    },
+    orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
+    take: 3,
+  });
+
   return (
-    <main className="mx-auto flex min-h-full w-full max-w-4xl flex-col gap-8 px-6 py-16 sm:px-10 sm:py-20">
+    <main className="mx-auto flex min-h-full w-full max-w-5xl flex-col gap-6 px-6 py-12 sm:px-10 sm:py-14">
       <Card className="rounded-lg">
         <CardHeader>
           <CardDescription className="font-display text-base tracking-wide sm:text-lg">
@@ -29,21 +39,49 @@ export default function Home() {
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/admin"
+              href="/posts"
               className={cn(buttonVariants({ variant: "contrast" }), "h-11 rounded-md px-5")}
             >
-              어드민 페이지
+              공개 블로그 보기
             </Link>
             <Link
-              href="https://hermes-agent.nousresearch.com/"
-              target="_blank"
+              href="/admin"
               className={cn(buttonVariants({ variant: "outline" }), "h-11 rounded-md px-5 text-foreground")}
             >
-              Hermes 벤치마크 보기
+              어드민 페이지
             </Link>
           </div>
         </CardContent>
       </Card>
+
+      <section className="grid grid-cols-1 gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-2xl">최신 포스트</h2>
+          <Link href="/posts" className="text-sm text-muted-foreground hover:text-foreground">
+            전체 보기
+          </Link>
+        </div>
+        {latestPosts.length === 0 ? (
+          <Card className="rounded-lg">
+            <CardContent className="py-8 text-sm text-muted-foreground">
+              아직 발행된 포스트가 없습니다.
+            </CardContent>
+          </Card>
+        ) : (
+          latestPosts.map((post) => (
+            <Card key={post.id} className="rounded-lg">
+              <CardHeader className="gap-2">
+                <CardTitle className="text-2xl">
+                  <Link href={`/posts/${encodeURIComponent(post.slug)}`} className="hover:opacity-80">
+                    {post.title}
+                  </Link>
+                </CardTitle>
+                <CardDescription className="line-clamp-2">{post.summary}</CardDescription>
+              </CardHeader>
+            </Card>
+          ))
+        )}
+      </section>
     </main>
   );
 }
