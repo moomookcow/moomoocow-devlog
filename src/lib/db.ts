@@ -7,10 +7,12 @@ const globalForPrisma = globalThis as unknown as {
   prismaPool: Pool | undefined;
 };
 
-const databaseUrl = process.env.DATABASE_URL;
+const databaseUrl = process.env.DATABASE_URL ?? process.env.DIRECT_URL;
 
 if (!databaseUrl) {
-  throw new Error("Missing DATABASE_URL for Prisma runtime client.");
+  throw new Error(
+    "Missing DATABASE_URL (or DIRECT_URL) for Prisma runtime client.",
+  );
 }
 
 const pool =
