@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { Prisma } from "@prisma/client";
 
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -14,6 +15,22 @@ import { isAdminEmailAllowed } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
+
+type AdminPost = Prisma.PostGetPayload<{
+  include: {
+    tags: {
+      include: {
+        tag: true;
+      };
+    };
+  };
+}>;
+
+type AdminTag = Prisma.TagGetPayload<{
+  include: {
+    posts: true;
+  };
+}>;
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -30,7 +47,7 @@ export default async function AdminPage() {
     redirect("/admin/login?error=forbidden");
   }
 
-  const [posts, tags] = await Promise.all([
+  const [posts, tags]: [AdminPost[], AdminTag[]] = await Promise.all([
     db.post.findMany({
       take: 8,
       orderBy: { updatedAt: "desc" },

@@ -1,10 +1,22 @@
 import Link from "next/link";
+import type { Prisma } from "@prisma/client";
 
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
+
+type PublicListPost = Prisma.PostGetPayload<{
+  include: {
+    tags: {
+      include: {
+        tag: true;
+      };
+    };
+  };
+}>;
+type PublicListTagRelation = PublicListPost["tags"][number];
 
 function estimateReadMinutes(markdown: string): number {
   const plain = markdown
@@ -21,7 +33,7 @@ function estimateReadMinutes(markdown: string): number {
 }
 
 export default async function PostsPage() {
-  const posts = await db.post.findMany({
+  const posts: PublicListPost[] = await db.post.findMany({
     where: {
       status: "published",
       deletedAt: null,
@@ -56,7 +68,7 @@ export default async function PostsPage() {
         </Card>
       ) : (
         <section className="grid grid-cols-1 gap-4">
-          {posts.map((post) => {
+          {posts.map((post: PublicListPost) => {
             const publishedLabel = post.publishedAt
               ? new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(post.publishedAt)
               : "미발행";
@@ -81,7 +93,7 @@ export default async function PostsPage() {
                   <CardDescription className="line-clamp-2">{post.summary}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap items-center gap-2">
-                  {post.tags.map((postTag) => (
+                  {post.tags.map((postTag: PublicListTagRelation) => (
                     <Badge key={postTag.tagId} variant="outline" className="h-8 rounded-md px-2.5 text-sm">
                       #{postTag.tag.name}
                     </Badge>
