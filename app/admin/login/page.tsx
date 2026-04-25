@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 import LoginForm from "@/components/admin/login-form";
 import { buttonVariants } from "@/components/ui/button";
@@ -24,33 +25,37 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
   const errorMessage = errorKey ? ERROR_MESSAGE[errorKey] ?? "로그인 중 오류가 발생했습니다." : null;
 
   return (
-    <main className="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-6 px-6 py-16 sm:px-10 sm:py-20">
-      <Card className="rounded-lg">
-        <CardHeader>
-          <CardDescription className="text-base tracking-wide sm:text-lg">Admin Auth</CardDescription>
-          <CardTitle className="text-3xl leading-tight sm:text-4xl">관리자 로그인</CardTitle>
-          <CardDescription className="mt-2 text-sm sm:text-base">
-            이메일 + 비밀번호 로그인 후 allowlist 검사에 통과한 계정만 `/admin`에 접근할 수 있습니다.
-          </CardDescription>
+    <main className="mx-auto flex min-h-full w-full max-w-5xl flex-col gap-5 px-4 py-10 sm:px-6 lg:px-8">
+      <Card className="surface-panel rounded-none">
+        <CardHeader className="space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-3">
+              <CardTitle className="korean-display text-5xl leading-tight sm:text-6xl">Admin Login</CardTitle>
+              <CardDescription className="korean-display text-lg leading-relaxed">
+                문을 열 수 있는 건, 허가된 관리자 계정뿐입니다.
+              </CardDescription>
+            </div>
+            <Link
+              className={cn(buttonVariants({ variant: "outline" }), "h-11 w-11 rounded-none p-0")}
+              href="/"
+              aria-label="홈으로 이동"
+            >
+              <ArrowLeft className="size-4" />
+            </Link>
+          </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="pt-2">
           {errorMessage ? (
-            <p className="mb-4 text-sm text-destructive" role="alert">
+            <p
+              className="mb-5 border border-destructive/35 bg-destructive/10 px-4 py-3 text-base text-destructive"
+              role="alert"
+            >
               {errorMessage}
             </p>
           ) : null}
 
           <LoginForm nextPath={next} />
-
-          <div className="mt-5">
-            <Link
-              className={cn(buttonVariants({ variant: "outline" }), "h-11 rounded-md px-5 text-foreground")}
-              href="/"
-            >
-              홈으로 돌아가기
-            </Link>
-          </div>
         </CardContent>
       </Card>
     </main>

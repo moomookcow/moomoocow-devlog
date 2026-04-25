@@ -15,6 +15,7 @@ type AdminNewPageProps = {
 
 const ERROR_MESSAGE: Record<string, string> = {
   required_fields: "제목과 본문은 필수입니다.",
+  save_failed: "글 저장에 실패했습니다. posts 테이블/RLS/컬럼 구성을 확인해주세요.",
 };
 
 const SUCCESS_MESSAGE: Record<string, string> = {

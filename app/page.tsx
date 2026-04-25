@@ -1,113 +1,10 @@
 import Link from "next/link";
 
+import CategoryPanel from "@/components/shared/category-panel";
+import RightFeedPanel from "@/components/shared/right-feed-panel";
 import { Badge } from "@/components/ui/badge";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-
-const nestedCategories = [
-  {
-    name: "Frontend",
-    children: [
-      {
-        name: "Next.js",
-        posts: [
-          "App Router에서 인증 가드 구성",
-          "loading.tsx와 전환 UX",
-          "SSR/CSR 경계 설계 메모",
-        ],
-      },
-      {
-        name: "React",
-        posts: [
-          "상태 분리와 리렌더링 최소화",
-          "폼 이벤트 처리 트러블슈팅",
-          "컴포넌트 구조 리팩터링 노트",
-        ],
-      },
-      {
-        name: "Tailwind",
-        posts: [
-          "토큰 기반 유틸 클래스 전략",
-          "hover/focus 스타일 통일",
-          "반응형 breakpoints 정리",
-        ],
-      },
-      {
-        name: "shadcn/ui",
-        posts: [
-          "Accordion 커스터마이징",
-          "Card/Badge 톤 매칭",
-          "ScrollArea 적용 패턴",
-        ],
-      },
-    ],
-  },
-  {
-    name: "Backend",
-    children: [
-      {
-        name: "Supabase",
-        posts: [
-          "Auth 리다이렉트 꼬임 해결",
-          "쿠키 세션 디버깅",
-          "운영 환경 설정 체크리스트",
-        ],
-      },
-      {
-        name: "Auth",
-        posts: [
-          "관리자 접근 제어 규칙",
-          "로그인 오류 케이스 정리",
-          "허용 계정 정책 초안",
-        ],
-      },
-      {
-        name: "DB Schema",
-        posts: [
-          "포스트/카테고리 모델 초안",
-          "슬러그 정책 정리",
-          "태그 구조 설계 노트",
-        ],
-      },
-      {
-        name: "Server Actions",
-        posts: ["폼 제출 흐름 정리", "유효성 검사 전략", "에러 메시지 UX 기준"],
-      },
-    ],
-  },
-  {
-    name: "Workflow",
-    children: [
-      {
-        name: "Design System",
-        posts: [
-          "Hermes 벤치마크 규칙화",
-          "폰트/타이포 토큰 정의",
-          "컴포넌트 품질 게이트 정리",
-        ],
-      },
-      {
-        name: "Deployment",
-        posts: [
-          "Vercel 환경변수 체크",
-          "도메인 연결 절차",
-          "배포 후 검증 루틴",
-        ],
-      },
-      {
-        name: "Testing",
-        posts: ["타입체크 루틴", "UI 수동 QA 체크리스트", "회귀 테스트 포인트"],
-      },
-    ],
-  },
-];
+import { sharedCategoryGroups } from "@/lib/mock-data";
 
 const mockPopular = [
   "Next.js App Router에서 인증 흐름 정리",
@@ -202,26 +99,20 @@ const mockPosts = [
   },
 ];
 
-function FeedPanel({ title, items }: { title: string; items: string[] }) {
-  return (
-    <section className="space-y-2">
-      <h3 className="korean-display text-xl">{title}</h3>
-      <ul className="space-y-1">
-        {items.map((item, idx) => (
-          <li
-            key={item}
-            className="theme-hover-soft flex cursor-pointer items-start gap-2 rounded-[2px] px-1 py-0.5 text-sm"
-          >
-            <span className="font-mono text-muted-foreground">
-              {String(idx + 1).padStart(2, "0")}
-            </span>
-            <span className="korean-display line-clamp-2">{item}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
+const homeFeedSections = [
+  {
+    title: "인기 글",
+    items: mockPopular.map((label, idx) => ({ id: `popular-${idx}`, label })),
+  },
+  {
+    title: "최근 글",
+    items: mockRecent.map((label, idx) => ({ id: `recent-${idx}`, label })),
+  },
+  {
+    title: "최근 댓글",
+    items: mockComments.map((label, idx) => ({ id: `comment-${idx}`, label })),
+  },
+];
 
 export default function HomePage() {
   return (
@@ -237,57 +128,7 @@ export default function HomePage() {
 
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
         <aside className="self-start space-y-4">
-          <Card className="surface-panel rounded-none flex max-h-[72vh] flex-col overflow-hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="korean-display text-2xl">
-                카테고리
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="overflow-hidden">
-              <ScrollArea className="max-h-[calc(72vh-6.5rem)] pr-2">
-                <Accordion multiple className="w-full">
-                  {nestedCategories.map((group) => (
-                    <AccordionItem
-                      key={group.name}
-                      value={group.name}
-                      className="border-border/60"
-                    >
-                      <AccordionTrigger className="korean-display cursor-pointer text-base">
-                        {group.name}
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <Accordion multiple className="w-full">
-                          {group.children.map((child) => (
-                            <AccordionItem
-                              key={`${group.name}-${child.name}`}
-                              value={`${group.name}-${child.name}`}
-                              className="border-border/40"
-                            >
-                              <AccordionTrigger className="korean-display cursor-pointer pl-4 text-sm text-muted-foreground">
-                                {child.name}
-                              </AccordionTrigger>
-                              <AccordionContent>
-                                <ul className="space-y-1 pl-8">
-                                  {child.posts.map((postTitle) => (
-                                    <li
-                                      key={postTitle}
-                                      className="theme-hover-soft korean-display cursor-pointer rounded-[2px] px-1 py-0.5 text-sm"
-                                    >
-                                      {postTitle}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </AccordionContent>
-                            </AccordionItem>
-                          ))}
-                        </Accordion>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+          <CategoryPanel groups={sharedCategoryGroups} />
         </aside>
 
         <section className="space-y-3">
@@ -325,29 +166,7 @@ export default function HomePage() {
         </section>
 
         <aside className="lg:sticky lg:top-24">
-          <Card className="surface-panel rounded-none flex h-[72vh] min-h-[520px] flex-col overflow-hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="korean-display text-2xl">
-                피드 패널
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex min-h-0 flex-1 flex-col gap-4">
-              <div className="shrink-0">
-                <Input
-                  placeholder="검색"
-                  aria-label="게시글 검색"
-                  className="h-9 font-mono text-sm"
-                />
-              </div>
-              <ScrollArea className="min-h-0 flex-1 pr-2">
-                <div className="space-y-6">
-                  <FeedPanel title="인기 글" items={mockPopular} />
-                  <FeedPanel title="최근 글" items={mockRecent} />
-                  <FeedPanel title="최근 댓글" items={mockComments} />
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+          <RightFeedPanel panelTitle="피드 패널" searchPlaceholder="검색" searchAriaLabel="게시글 검색" sections={homeFeedSections} />
         </aside>
       </div>
     </div>

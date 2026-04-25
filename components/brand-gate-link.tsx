@@ -1,20 +1,64 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 export default function BrandGateLink() {
   const router = useRouter();
+  const pathname = usePathname();
   const [clickCount, setClickCount] = useState(0);
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clickTimestampsRef = useRef<number[]>([]);
+
+  useEffect(() => {
+    return () => {
+      if (clickTimerRef.current) {
+        clearTimeout(clickTimerRef.current);
+      }
+    };
+  }, []);
 
   function onClick() {
-    const next = clickCount + 1;
-    if (next >= 5) {
+    const now = Date.now();
+    clickTimestampsRef.current = [...clickTimestampsRef.current, now].filter(
+      (timestamp) => now - timestamp <= 2000,
+    );
+
+    if (clickTimestampsRef.current.length >= 5) {
+      clickTimestampsRef.current = [];
+      if (clickTimerRef.current) {
+        clearTimeout(clickTimerRef.current);
+        clickTimerRef.current = null;
+      }
       setClickCount(0);
-      router.push("/admin/login");
+      router.push("/admin");
       return;
     }
-    setClickCount(next);
+
+    if (pathname === "/") {
+      return;
+    }
+
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+    }
+
+    setClickCount((prev) => {
+      const next = prev + 1;
+
+      if (next >= 5) {
+        router.push("/admin");
+        return 0;
+      }
+
+      clickTimerRef.current = setTimeout(() => {
+        setClickCount(0);
+        router.push("/");
+      }, 260);
+
+      return next;
+    });
   }
 
   return (
@@ -29,4 +73,3 @@ export default function BrandGateLink() {
     </button>
   );
 }
-
