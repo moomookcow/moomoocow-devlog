@@ -71,8 +71,12 @@ function buildSummary(input: string): string {
 export async function createPostAction(formData: FormData) {
   const supabase = await createClient();
   const {
-    data: { user },
+    data: { user: directUser },
   } = await supabase.auth.getUser();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = directUser ?? session?.user ?? null;
 
   if (!user || !isAdminAllowed(user)) {
     redirect("/admin/login?error=forbidden");

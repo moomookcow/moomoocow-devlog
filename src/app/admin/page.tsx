@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { requireAdminOrRedirect } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
@@ -18,7 +17,9 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const supabase = await createClient();
-  const user = await requireAdminOrRedirect(supabase, "/admin");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const [posts, tags] = await Promise.all([
     db.post.findMany({
@@ -60,7 +61,7 @@ export default async function AdminPage() {
             <CardTitle className="font-display text-3xl leading-tight sm:text-4xl">
               블로그 운영 대시보드
             </CardTitle>
-            <CardDescription>현재 로그인 계정: {user.email}</CardDescription>
+            <CardDescription>현재 로그인 계정: {user?.email ?? "unknown"}</CardDescription>
           </div>
 
           <div className="flex items-center gap-2">
