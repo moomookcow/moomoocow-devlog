@@ -16,10 +16,12 @@ Design intent: moomoocow-devlog UI must provide a clean, functional, implementat
 - Visual style must be clean, functional, and implementation-oriented.
 - Token usage must prefer semantic aliases over raw color literals.
 - Typography must prioritize technical readability over decorative styling.
+- Korean typography tone should emphasize Song Myung in display contexts to preserve brand character.
 
 ### Typography tokens
 - `font.family.primary` must use a readable sans stack for Korean/English mixed content.
-- `font.family.display` should be used only for major headings/brand lines.
+- `font.family.display` should be used for major headings/brand lines and should be used more broadly for Korean display text.
+- Korean-first key titles (page title, section title, hero copy, important card headings) should prefer `font.family.display`.
 - `font.size.base` must be `14px`.
 - `font.weight.base` must be `400`.
 - `font.lineHeight.base` must be `21px`.
@@ -48,6 +50,9 @@ Design intent: moomoocow-devlog UI must provide a clean, functional, implementat
 - Base spacing unit must be 14px.
 - Spacing scale should include `14px`, `28px`, and larger layout tokens for section rhythm.
 - `radius.base` should be moderate and consistent across components.
+- Excessive border and excessive border-radius usage must be avoided.
+- Border should be used only when it provides clear structural meaning.
+- Radius should remain subtle; over-rounded components should not be used.
 - Motion duration token:
   - `motion.duration.instant=150ms`
 - State transitions should use tokenized timing and avoid ad-hoc durations.
@@ -91,6 +96,22 @@ Design intent: moomoocow-devlog UI must provide a clean, functional, implementat
 - TOC must be visible on desktop and accessible via collapsed section on mobile.
 - Previous/next post navigation must be present near the bottom.
 - Comment section must include input, submit action, and empty/loading/error states.
+- Post loading UI must provide skeleton placeholders for:
+  - title/meta block
+  - main markdown content block
+  - TOC block
+  - previous/next navigation block
+- Loading transitions must avoid layout shift and keep reading focus stable.
+
+### Loading components (cross-page)
+- Route-level loading components must be defined for:
+  - home/feed page
+  - post detail page
+  - admin dashboard
+  - admin editor page
+- Loading components must use semantic surface/border tokens.
+- Loading placeholders should preserve final layout proportions.
+- Loading state copy should be concise and implementation-focused when text is shown.
 
 ### Admin dashboard
 - Dashboard must include:
@@ -133,6 +154,7 @@ Design intent: moomoocow-devlog UI must provide a clean, functional, implementat
   - Pass: keyboard-only user can login, open editor, and publish draft.
   - Pass: all interactive controls show visible focus ring.
   - Pass: no text/control pair falls below required contrast.
+  - Pass: route loading components are visible during delayed data fetch and do not break layout.
   - Fail: hidden focus indicator, hover-only affordance, or unlabeled action control.
 
 ## Content and tone standards
@@ -149,11 +171,13 @@ Design intent: moomoocow-devlog UI must provide a clean, functional, implementat
 - Ambiguous labels and generic action names must not be used.
 - Component guidance without explicit state rules must not be accepted.
 - Raw hex colors in component code should not be preferred over semantic tokens.
+- Heavy border density and exaggerated rounded corners must not be introduced.
 
 ## QA checklist
 - [ ] Every component documents default/hover/focus-visible/active/disabled/loading/error states.
 - [ ] Responsive behavior is validated for mobile and desktop.
 - [ ] Long-content, overflow, and empty states are defined and tested.
+- [ ] Route-level loading components are implemented and layout-safe.
 - [ ] Keyboard, pointer, and touch behavior are all documented.
 - [ ] WCAG 2.2 AA contrast and focus-visible checks pass.
 - [ ] Labels and actions are explicit and implementation-focused.
@@ -164,4 +188,3 @@ Design intent: moomoocow-devlog UI must provide a clean, functional, implementat
 - Recommendations should use `should`.
 - Accessibility requirements must be testable in implementation.
 - System consistency should be preferred over local visual exceptions.
-
