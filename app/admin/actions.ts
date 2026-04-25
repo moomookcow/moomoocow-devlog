@@ -13,18 +13,22 @@ export async function createPostAction(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const contentMdx = String(formData.get("contentMdx") ?? "").trim();
   const summary = String(formData.get("summary") ?? "").trim();
+  const publishTitle = String(formData.get("publishTitle") ?? "").trim();
+  const publishSummary = String(formData.get("publishSummary") ?? "").trim();
   const tagsRaw = String(formData.get("tags") ?? "").trim();
   const statusRaw = String(formData.get("status") ?? "draft");
   const status = statusRaw === "published" ? "published" : "draft";
+  const finalTitle = status === "published" && publishTitle ? publishTitle : title;
+  const finalSummary = status === "published" && publishSummary ? publishSummary : summary;
 
-  if (!title || !contentMdx) {
+  if (!finalTitle || !contentMdx) {
     redirect("/admin/new?error=required_fields");
   }
 
   try {
     const created = await createPost(supabase, {
-      title,
-      summary,
+      title: finalTitle,
+      summary: finalSummary,
       contentMdx,
       status,
       tagsRaw,
