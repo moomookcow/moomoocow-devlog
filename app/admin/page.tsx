@@ -1,8 +1,7 @@
-import Link from "next/link";
-
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { requireAdminOrRedirect } from "@/lib/admin-auth";
 import { getAdminLabel } from "@/lib/admin";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
@@ -11,9 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await requireAdminOrRedirect(supabase, "/admin");
 
   return (
     <main className="mx-auto flex min-h-full w-full max-w-6xl flex-col gap-4 px-6 py-10 sm:px-10 sm:py-12">
@@ -26,19 +23,15 @@ export default async function AdminPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Link
+            <a
               href="/admin/new"
-              prefetch={false}
               className={cn(buttonVariants({ variant: "default" }), "h-9 rounded-md px-4")}
             >
               새 글 작성
-            </Link>
-            <Link
-              href="/auth/signout"
-              className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-md px-4")}
-            >
+            </a>
+            <a href="/auth/signout" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-md px-4")}>
               로그아웃
-            </Link>
+            </a>
           </div>
         </CardHeader>
       </Card>
@@ -76,4 +69,3 @@ export default async function AdminPage() {
     </main>
   );
 }
-

@@ -1,8 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { isAdminAllowed } from "@/lib/admin";
-
 export async function middleware(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const hasAuthCode = requestUrl.searchParams.has("code");
@@ -41,39 +39,11 @@ export async function middleware(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-  const isAdminLoginRoute = request.nextUrl.pathname.startsWith("/admin/login");
-
-  if (!isAdminRoute) return response;
-
-  const next = request.nextUrl.pathname + request.nextUrl.search;
-
-  if (!user) {
-    if (isAdminLoginRoute) return response;
-
-    const loginUrl = new URL("/admin/login", request.url);
-    loginUrl.searchParams.set("next", next);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  if (!isAdminAllowed(user)) {
-    const deniedUrl = new URL("/admin/login", request.url);
-    deniedUrl.searchParams.set("error", "forbidden");
-    return NextResponse.redirect(deniedUrl);
-  }
-
-  if (isAdminLoginRoute) {
-    return NextResponse.redirect(new URL("/admin", request.url));
-  }
+  await supabase.auth.getUser();
 
   return response;
 }
 
 export const config = {
-  matcher: ["/admin", "/admin/:path*", "/auth/confirm"],
+  matcher: ["/admin/:path*", "/auth/confirm"],
 };
-
