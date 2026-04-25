@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ export default function VelogEditor({ action }: VelogEditorProps) {
   const [title, setTitle] = useState<string>("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState<string>("");
+  const contentRef = useRef<HTMLTextAreaElement | null>(null);
 
   const summary = useMemo(
     () => content.replace(/[#>*_\-\[\]()`]/g, " ").replace(/\s+/g, " ").trim().slice(0, 180),
@@ -73,6 +75,14 @@ export default function VelogEditor({ action }: VelogEditorProps) {
 
     return merged.join(",");
   }, [tagInput, tags]);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [content]);
 
   return (
     <form
@@ -143,20 +153,25 @@ export default function VelogEditor({ action }: VelogEditorProps) {
 
       <div className="grid min-h-0 flex-1 gap-0 overflow-hidden lg:grid-cols-2">
         <div className="min-h-0 overflow-hidden">
-          <Textarea
-            name="contentMdx"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="h-full min-h-0 resize-none overflow-y-auto rounded-none border-0 bg-transparent p-5 font-mono text-[15px] leading-7 shadow-none focus-visible:ring-0 dark:bg-transparent"
-            placeholder=""
-            required
-          />
+          <ScrollArea className="h-full w-full">
+            <Textarea
+              ref={contentRef}
+              name="contentMdx"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="h-auto min-h-full resize-none overflow-hidden rounded-none border-0 bg-transparent p-5 font-mono text-[20px] leading-8 shadow-none focus-visible:ring-0 md:text-[26px] md:leading-[2.2rem] dark:bg-transparent"
+              placeholder=""
+              required
+            />
+          </ScrollArea>
         </div>
 
         <div className="min-h-0 overflow-hidden border-l border-border/55">
-          <div className="markdown-preview h-full overflow-y-auto p-5">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-          </div>
+          <ScrollArea className="h-full w-full">
+            <div className="markdown-preview p-5">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+            </div>
+          </ScrollArea>
         </div>
       </div>
 
