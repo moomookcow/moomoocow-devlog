@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { isAdminEmailAllowed } from "@/lib/admin";
+import { isAdminAllowed } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
 
@@ -74,7 +74,7 @@ export async function createPostAction(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user || !isAdminEmailAllowed(user.email)) {
+  if (!user || !isAdminAllowed(user)) {
     redirect("/admin/login?error=forbidden");
   }
 

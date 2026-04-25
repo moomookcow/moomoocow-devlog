@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
-import { isAdminEmailAllowed } from "@/lib/admin";
+import { isAdminAllowed } from "@/lib/admin";
 import type { createClient } from "@/lib/supabase/server";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
@@ -20,11 +20,10 @@ export async function requireAdminOrRedirect(
     redirect(`/admin/login?next=${encodeURIComponent(nextPath)}`);
   }
 
-  if (!isAdminEmailAllowed(user.email)) {
+  if (!isAdminAllowed(user)) {
     await supabase.auth.signOut();
     redirect("/admin/login?error=forbidden");
   }
 
   return user;
 }
-

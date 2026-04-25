@@ -188,6 +188,7 @@
 - `ADMIN_EMAIL_ALLOWLIST`
 
 권장 키:
+- `ADMIN_GITHUB_ALLOWLIST` (GitHub OAuth admin allowlist)
 - `DIRECT_URL` (Prisma migrate)
 - `NEXTAUTH_URL`, `NEXTAUTH_SECRET` (인증 구현 선택 시)
 
@@ -199,11 +200,11 @@
 
 ## 13) 어드민 인증/인가 상세 정책
 인증:
-- Supabase Auth 기반 로그인(이메일 링크 또는 OAuth provider)은 반드시 지원해야 한다.
+- Supabase Auth 기반 로그인(GitHub OAuth provider)은 반드시 지원해야 한다.
 - 로그인 세션 만료 시 재로그인을 요구해야 한다.
 
 인가:
-- `ADMIN_EMAIL_ALLOWLIST`에 등록된 계정만 관리자 권한을 가져야 한다.
+- `ADMIN_EMAIL_ALLOWLIST` 또는 `ADMIN_GITHUB_ALLOWLIST`에 등록된 계정만 관리자 권한을 가져야 한다.
 - 비인가 계정의 `/admin/*` 요청은 `/admin/login`으로 리다이렉트해야 한다.
 - 관리자 API/Server Action은 세션 검증 + allowlist 검증을 모두 통과해야 한다.
 

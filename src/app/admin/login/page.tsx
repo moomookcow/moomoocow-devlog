@@ -34,7 +34,7 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
             관리자 로그인
           </CardTitle>
           <CardDescription className="mt-2 text-sm sm:text-base">
-            Supabase 이메일 로그인 링크로 인증합니다. 로그인 후 allowlist 검사에 통과한 계정만
+            GitHub OAuth로 인증합니다. 로그인 후 allowlist 검사(이메일/GitHub)에 통과한 계정만
             `/admin`에 접근할 수 있습니다.
           </CardDescription>
         </CardHeader>

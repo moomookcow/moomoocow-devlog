@@ -27,6 +27,7 @@
 | `DATABASE_URL` | server-only | Prisma용 Postgres 연결 문자열 |
 | `DIRECT_URL` | server-only(optional) | Prisma migrate 전용 direct 연결 문자열 |
 | `ADMIN_EMAIL_ALLOWLIST` | server-only | 어드민 접근 허용 이메일 목록(콤마 구분) |
+| `ADMIN_GITHUB_ALLOWLIST` | server-only(optional) | 어드민 접근 허용 GitHub username 목록(콤마 구분, 소문자 권장) |
 | `NEXTAUTH_URL` | dev/staging/prod(optional) | 배포 URL 기반 인증 콜백 보조 값 |
 | `NEXTAUTH_SECRET` | server-only(optional) | 세션 서명 키(인증 구현 선택 시) |
 
@@ -37,7 +38,8 @@
 
 ## 어드민 인증 정책(요약)
 - 초기 정책은 단일 관리자(1인 운영) 기준입니다.
-- 로그인 성공 후 이메일이 `ADMIN_EMAIL_ALLOWLIST`에 포함되어야 `/admin` 접근이 가능합니다.
+- 로그인 방식은 Supabase GitHub OAuth를 사용합니다.
+- 로그인 성공 후 이메일(`ADMIN_EMAIL_ALLOWLIST`) 또는 GitHub username(`ADMIN_GITHUB_ALLOWLIST`) allowlist 검사에 통과해야 `/admin` 접근이 가능합니다.
 - 비인가 사용자는 `/admin/login`으로 리다이렉트해야 합니다.
 - 세션 만료 시 재로그인 후 직전 페이지로 복귀해야 합니다.
 

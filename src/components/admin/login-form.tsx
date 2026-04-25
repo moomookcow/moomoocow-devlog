@@ -1,9 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 
 type LoginFormProps = {
@@ -11,69 +10,47 @@ type LoginFormProps = {
 };
 
 export default function LoginForm({ nextPath = "/admin" }: LoginFormProps) {
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [loadingGithub, setLoadingGithub] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLoading(true);
-    setNotice(null);
+  async function onSignInGithub() {
+    setLoadingGithub(true);
     setError(null);
 
     const supabase = createClient();
     const redirectTo = `${window.location.origin}/auth/confirm?next=${encodeURIComponent(nextPath)}`;
 
-    const { error: signInError } = await supabase.auth.signInWithOtp({
-      email,
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "github",
       options: {
-        emailRedirectTo: redirectTo,
+        redirectTo,
+        scopes: "read:user user:email",
       },
     });
 
-    if (signInError) {
-      setError(signInError.message);
-      setLoading(false);
+    if (oauthError) {
+      setError(oauthError.message);
+      setLoadingGithub(false);
       return;
     }
-
-    setNotice("로그인 링크를 이메일로 보냈습니다. 메일에서 링크를 눌러 로그인해주세요.");
-    setLoading(false);
   }
 
   return (
-    <form className="mt-6 flex flex-col gap-3" onSubmit={onSubmit}>
-      <label className="text-sm text-muted-foreground" htmlFor="email">
-        관리자 이메일
-      </label>
-      <Input
-        id="email"
-        name="email"
-        type="email"
-        autoComplete="email"
-        required
-        className="h-11 rounded-md text-sm"
-        placeholder="you@example.com"
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-      />
-
+    <div className="mt-6 flex flex-col gap-3">
       <Button
         variant="contrast"
         className="h-11 rounded-md px-5 text-sm"
-        type="submit"
-        disabled={loading}
+        type="button"
+        disabled={loadingGithub}
+        onClick={onSignInGithub}
       >
-        {loading ? "메일 발송 중..." : "이메일로 로그인 링크 받기"}
+        {loadingGithub ? "GitHub로 이동 중..." : "GitHub로 로그인"}
       </Button>
-
-      {notice ? <p className="text-sm text-muted-foreground">{notice}</p> : null}
       {error ? (
         <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
       ) : null}
-    </form>
+    </div>
   );
 }
