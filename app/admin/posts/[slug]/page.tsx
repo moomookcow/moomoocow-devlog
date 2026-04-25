@@ -74,7 +74,7 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
       </Card>
 
       <Card>
-        <CardContent className="prose prose-sm max-w-none p-6 dark:prose-invert">
+        <CardContent className="markdown-preview p-6">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.contentMdx}</ReactMarkdown>
         </CardContent>
       </Card>

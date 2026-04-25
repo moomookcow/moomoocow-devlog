@@ -1,12 +1,11 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 export default function BrandGateLink() {
   const router = useRouter();
   const pathname = usePathname();
-  const [clickCount, setClickCount] = useState(0);
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clickTimestampsRef = useRef<number[]>([]);
 
@@ -30,7 +29,6 @@ export default function BrandGateLink() {
         clearTimeout(clickTimerRef.current);
         clickTimerRef.current = null;
       }
-      setClickCount(0);
       router.push("/admin");
       return;
     }
@@ -44,21 +42,9 @@ export default function BrandGateLink() {
       clickTimerRef.current = null;
     }
 
-    setClickCount((prev) => {
-      const next = prev + 1;
-
-      if (next >= 5) {
-        router.push("/admin");
-        return 0;
-      }
-
-      clickTimerRef.current = setTimeout(() => {
-        setClickCount(0);
-        router.push("/");
-      }, 260);
-
-      return next;
-    });
+    clickTimerRef.current = setTimeout(() => {
+      router.push("/");
+    }, 260);
   }
 
   return (

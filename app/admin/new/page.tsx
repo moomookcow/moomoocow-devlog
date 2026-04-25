@@ -32,19 +32,19 @@ export default async function AdminNewPage({ searchParams }: AdminNewPageProps) 
   const successMessage = params?.success ? SUCCESS_MESSAGE[params.success] : null;
 
   return (
-    <main className="mx-auto flex h-[100dvh] w-full max-w-none min-h-0 flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8">
+    <main className="fixed inset-0 z-[60] flex min-h-0 flex-col overflow-hidden bg-background px-4 py-4 sm:px-6 lg:px-8">
       {errorMessage ? (
-        <p className="text-sm text-destructive" role="alert">
+        <p className="mb-3 shrink-0 border border-destructive/35 px-3 py-2 text-sm text-destructive" role="alert">
           {errorMessage}
         </p>
       ) : null}
       {successMessage ? (
-        <p className="text-sm text-foreground" role="status">
+        <p className="mb-3 shrink-0 border border-border/60 px-3 py-2 text-sm text-foreground" role="status">
           {successMessage}
         </p>
       ) : null}
 
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 flex-1 overflow-hidden">
         <VelogEditor action={createPostAction} />
       </div>
     </main>
