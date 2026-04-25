@@ -11,10 +11,14 @@ export async function requireAdminOrRedirect(
   nextPath: string,
 ): Promise<User> {
   const {
+    data: { user: directUser },
+  } = await supabase.auth.getUser();
+
+  const {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const user = session?.user ?? null;
+  const user = directUser ?? session?.user ?? null;
 
   if (!user) {
     redirect(`/admin/login?next=${encodeURIComponent(nextPath)}`);

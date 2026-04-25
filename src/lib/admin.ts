@@ -12,11 +12,38 @@ function parseAllowlist(raw: string | undefined): Set<string> {
 }
 
 function getGitHubUsername(user: User): string | null {
+  const identityCandidates =
+    user.identities
+      ?.filter((identity) => identity.provider === "github")
+      .map((identity) => {
+        const data = identity.identity_data as
+          | {
+              user_name?: string;
+              preferred_username?: string;
+              username?: string;
+              login?: string;
+            }
+          | undefined;
+
+        return (
+          data?.user_name ??
+          data?.preferred_username ??
+          data?.username ??
+          data?.login ??
+          null
+        );
+      }) ?? [];
+
   const candidates = [
+    ...identityCandidates,
     user.user_metadata?.user_name,
     user.user_metadata?.preferred_username,
     user.user_metadata?.username,
     user.user_metadata?.login,
+    user.app_metadata?.user_name,
+    user.app_metadata?.preferred_username,
+    user.app_metadata?.username,
+    user.app_metadata?.login,
   ];
 
   const hit = candidates.find(
