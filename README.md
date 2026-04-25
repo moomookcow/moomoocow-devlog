@@ -1,5 +1,15 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment Variables
+
+Copy env template before running:
+
+```bash
+cp .env.example .env.local
+```
+
+Then fill values for Supabase/Auth allowlist in `.env.local`.
+
 ## Getting Started
 
 First, run the development server:
