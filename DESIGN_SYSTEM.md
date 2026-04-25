@@ -70,6 +70,9 @@ Design intent: moomoocow-devlog UI must provide a clean, functional, implementat
   - error
 - Every component must define responsive behavior for mobile and desktop.
 - Every component must define handling for long-content, overflow, and empty-state.
+- Interactive UI controls (button, input, textarea, select, dialog, dropdown, tabs, badge, card, scroll container) must use shadcn/ui components as the baseline.
+- Direct raw HTML controls should not be used for production UI unless wrapped by project UI components.
+- Most dialogs and interactive components should use shadcn/ui primitives, but final UI must be aligned to this project's design tokens, typography rules, spacing, and accessibility standards.
 
 ### Layout shell (Header / Content / Footer)
 - Shell must remain structurally consistent across public and admin surfaces.
@@ -145,6 +148,13 @@ Design intent: moomoocow-devlog UI must provide a clean, functional, implementat
 - Touch:
   - Interactive controls must remain usable without hover dependency.
 
+### Typography rollout scope
+- Song Myung display typography must be applied consistently across:
+  - public page major headings
+  - post detail title and key section headings
+  - admin page titles and important section headings
+- Body text, dense metadata, and form field content should remain in primary sans font for readability.
+
 ## Accessibility requirements and testable acceptance criteria
 - Target must be WCAG 2.2 AA.
 - Focus-visible indicators must always be present on keyboard navigation.
@@ -172,6 +182,7 @@ Design intent: moomoocow-devlog UI must provide a clean, functional, implementat
 - Component guidance without explicit state rules must not be accepted.
 - Raw hex colors in component code should not be preferred over semantic tokens.
 - Heavy border density and exaggerated rounded corners must not be introduced.
+- Mixing ad-hoc raw HTML form controls with shadcn-based controls must not be introduced.
 
 ## QA checklist
 - [ ] Every component documents default/hover/focus-visible/active/disabled/loading/error states.
