@@ -131,7 +131,7 @@ cp .env.example .env.local
 - [x] 제목/slug 수정 시 slug alias 저장(기존 URL fallback)
 - [x] `categories` 테이블 도입 후 다이얼로그 카테고리 하드코딩 제거
 - [x] 썸네일 업로드 결과(`thumbnail_url`)를 관리자 상세/목록/공개 페이지에 실제 표시
-- [ ] `not-found.tsx` 커스텀 제작(운영/공개 경로 공통)
+- [x] `not-found.tsx` 커스텀 제작(운영/공개 경로 공통)
 
 ## 13) 개발 커맨드
 ```bash
@@ -141,6 +141,6 @@ pnpm exec tsc --noEmit
 ```
 
 ## 14) 예외 페이지
-- [ ] `not-found.tsx` 커스텀 404 페이지 제작
-- [ ] 404 페이지: 홈 이동/이전 페이지 이동 CTA 제공
-- [ ] 404 페이지: 디자인 시스템 토큰 적용
+- [x] `not-found.tsx` 커스텀 404 페이지 제작
+- [x] 404 페이지: 홈 이동/이전 페이지 이동 CTA 제공
+- [x] 404 페이지: 디자인 시스템 토큰 적용
