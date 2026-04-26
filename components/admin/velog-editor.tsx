@@ -25,7 +25,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { generateSummaryFromMarkdown } from "@/lib/summary";
 import { cn } from "@/lib/utils";
 import { normalizeSlugInput, type AdminPost } from "@/lib/posts";
-import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type VelogEditorProps = {
   action: (formData: FormData) => void;
@@ -33,7 +32,6 @@ type VelogEditorProps = {
   categoryOptions?: Array<{ id: string; value: string; label: string; parentId: string | null }>;
 };
 
-const EDITOR_IMAGE_BUCKET = "post-thumbnails";
 const EDITOR_IMAGE_MAX_WIDTH = 1600;
 const EDITOR_IMAGE_MAX_HEIGHT = 1600;
 const EDITOR_IMAGE_QUALITY = 0.82;
@@ -329,31 +327,34 @@ export default function VelogEditor({ action, initialPost, categoryOptions = DEF
 
     try {
       setIsEditorImageUploading(true);
-      const supabase = createSupabaseBrowserClient();
       const optimizedFile = await optimizeImageFile(file);
-      const safeName = sanitizeUploadName(optimizedFile.name || "image");
-      const ext = safeName.includes(".") ? safeName.split(".").pop() : "jpg";
-      const path = `editor/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-
-      const uploaded = await supabase.storage.from(EDITOR_IMAGE_BUCKET).upload(path, optimizedFile, {
-        cacheControl: "3600",
-        contentType: optimizedFile.type,
-        upsert: false,
+      const payload = new FormData();
+      payload.append("file", optimizedFile);
+      const response = await fetch("/api/admin/editor-image", {
+        method: "POST",
+        body: payload,
       });
 
-      if (uploaded.error) {
-        throw uploaded.error;
+      const result = (await response.json().catch(() => ({}))) as {
+        url?: string;
+        code?: string;
+        message?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(result.code || result.message || "UPLOAD_FAILED");
       }
 
-      const publicUrl = supabase.storage.from(EDITOR_IMAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+      const publicUrl = result.url;
       if (!publicUrl) {
         throw new Error("NO_PUBLIC_URL");
       }
 
       const alt = (file.name || "image").replace(/\.[^.]+$/, "");
       insertMarkdownAtCursor(`\n![${alt}](${publicUrl})\n`);
-    } catch {
-      setEditorImageError("본문 이미지 업로드에 실패했습니다. Storage 버킷/정책을 확인해주세요.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "UPLOAD_FAILED";
+      setEditorImageError(`본문 이미지 업로드 실패: ${message}`);
     } finally {
       setIsEditorImageUploading(false);
     }
