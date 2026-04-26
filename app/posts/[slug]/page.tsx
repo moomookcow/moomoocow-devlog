@@ -148,6 +148,9 @@ export default async function PublicPostDetailPage({ params }: PublicPostPagePro
     currentIndex >= 0 && currentIndex < publishedPosts.length - 1
       ? publishedPosts[currentIndex + 1]
       : null;
+  const sameCategoryPosts = post.category
+    ? publishedPosts.filter((item) => item.category === post.category).slice(0, 16)
+    : [];
   const readingMinutes = estimateReadMinutes(post.contentMdx);
   const headingRenderers = createHeadingRenderers();
 
@@ -203,6 +206,42 @@ export default async function PublicPostDetailPage({ params }: PublicPostPagePro
                 </div>
               </CardContent>
             ) : null}
+          </Card>
+
+          <Card className="surface-panel rounded-none">
+            <CardHeader>
+              <CardTitle className="korean-display text-2xl">
+                같은 카테고리 글
+                {post.category ? ` · ${post.category}` : ""}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {sameCategoryPosts.length === 0 ? (
+                <p className="korean-display text-sm text-muted-foreground">같은 카테고리 글이 아직 없습니다.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {sameCategoryPosts.map((item) => {
+                    const isCurrent = item.slug === post.slug;
+                    return (
+                      <li key={item.id}>
+                        <Link
+                          href={`/posts/${encodeURIComponent(item.slug)}`}
+                          aria-current={isCurrent ? "page" : undefined}
+                          className={cn(
+                            "korean-display block rounded-none px-2 py-1 transition-opacity",
+                            isCurrent
+                              ? "font-bold text-foreground"
+                              : "text-muted-foreground hover:opacity-85",
+                          )}
+                        >
+                          {item.title}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </CardContent>
           </Card>
 
           <Card className="surface-panel rounded-none">
