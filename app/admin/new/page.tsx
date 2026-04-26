@@ -1,5 +1,6 @@
 import VelogEditor from "@/components/admin/velog-editor";
 import { requireAdminOrRedirect } from "@/lib/admin-auth";
+import { listActiveCategories } from "@/lib/categories";
 import { getPostBySlug } from "@/lib/posts";
 import { createClient } from "@/lib/supabase/server";
 
@@ -48,6 +49,31 @@ export default async function AdminNewPage({ searchParams }: AdminNewPageProps) 
   const targetSlug = String(params?.slug ?? "").trim();
   const initialPost = targetSlug ? await getPostBySlug(supabase, targetSlug) : null;
   const finalErrorMessage = targetSlug && !initialPost ? ERROR_MESSAGE.post_not_found : errorMessage;
+  let categoryOptions = [] as Array<{ id: string; value: string; label: string; parentId: string | null }>;
+  try {
+    const categories = await listActiveCategories(supabase, 200);
+    categoryOptions = categories.map((item) => ({
+      id: item.id,
+      value: item.slug,
+      label: item.name,
+      parentId: item.parentId,
+    }));
+  } catch {
+    categoryOptions = [];
+  }
+
+  if (initialPost?.category && !categoryOptions.some((item) => item.value === initialPost.category)) {
+    categoryOptions = [
+      ...categoryOptions,
+      {
+        id: `legacy-${initialPost.category}`,
+        value: initialPost.category,
+        label: initialPost.category,
+        parentId: null,
+      },
+    ];
+  }
+
   const debugHint =
     params?.error === "save_failed" && (params?.debug_code || params?.debug_message)
       ? `debug_code=${params?.debug_code ?? "-"} / ${params?.debug_message ?? "-"}`
@@ -68,7 +94,11 @@ export default async function AdminNewPage({ searchParams }: AdminNewPageProps) 
       ) : null}
 
       <div className="min-h-0 flex-1 overflow-hidden">
-        <VelogEditor action={createPostAction} initialPost={initialPost ?? undefined} />
+        <VelogEditor
+          action={createPostAction}
+          initialPost={initialPost ?? undefined}
+          categoryOptions={categoryOptions}
+        />
       </div>
     </main>
   );

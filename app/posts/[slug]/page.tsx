@@ -12,6 +12,8 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
+import { listActiveCategories } from "@/lib/categories";
 import { sharedCategoryGroups } from "@/lib/mock-data";
 import { getPublishedPostBySlug, listPublishedPosts } from "@/lib/posts";
 import { createClient } from "@/lib/supabase/server";
@@ -130,6 +132,16 @@ export default async function PublicPostDetailPage({ params }: PublicPostPagePro
   if (!post) notFound();
 
   const publishedPosts = await listPublishedPosts(supabase, 200);
+  let categoryGroups = sharedCategoryGroups;
+  try {
+    const categories = await listActiveCategories(supabase, 200);
+    const groups = buildCategoryPanelGroups(categories, publishedPosts, { hrefBase: "/posts" });
+    if (groups.length > 0) {
+      categoryGroups = groups;
+    }
+  } catch {
+    categoryGroups = sharedCategoryGroups;
+  }
   const currentIndex = publishedPosts.findIndex((item) => item.slug === post.slug);
   const nextPost = currentIndex > 0 ? publishedPosts[currentIndex - 1] : null;
   const prevPost =
@@ -143,7 +155,7 @@ export default async function PublicPostDetailPage({ params }: PublicPostPagePro
     <main className="mx-auto w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
         <aside className="self-start space-y-4">
-          <CategoryPanel groups={sharedCategoryGroups} />
+          <CategoryPanel groups={categoryGroups} />
         </aside>
 
         <article className="space-y-3">

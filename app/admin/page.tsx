@@ -4,9 +4,11 @@ import Link from "next/link";
 import CategoryPanel from "@/components/shared/category-panel";
 import RightFeedPanel from "@/components/shared/right-feed-panel";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireAdminOrRedirect } from "@/lib/admin-auth";
+import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
+import { listActiveCategories } from "@/lib/categories";
 import { sharedCategoryGroups } from "@/lib/mock-data";
 import { listAdminPosts } from "@/lib/posts";
 import { createClient } from "@/lib/supabase/server";
@@ -58,11 +60,21 @@ export default async function AdminPage() {
 
   let postsError = false;
   let posts = [] as Awaited<ReturnType<typeof listAdminPosts>>;
+  let categoryGroups = sharedCategoryGroups;
 
   try {
     posts = await listAdminPosts(supabase, 50);
   } catch {
     postsError = true;
+  }
+  try {
+    const categories = await listActiveCategories(supabase, 200);
+    const groups = buildCategoryPanelGroups(categories, posts, { hrefBase: "/admin/posts" });
+    if (groups.length > 0) {
+      categoryGroups = groups;
+    }
+  } catch {
+    categoryGroups = sharedCategoryGroups;
   }
 
   const publishedCount = posts.filter((post) => post.status === "published").length;
@@ -105,7 +117,7 @@ export default async function AdminPage() {
 
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
         <aside className="self-start space-y-4">
-          <CategoryPanel groups={sharedCategoryGroups} />
+          <CategoryPanel groups={categoryGroups} />
         </aside>
 
         <section className="space-y-3">
@@ -117,9 +129,9 @@ export default async function AdminPage() {
                 <CardDescription>카테고리 관리, 글 작성, 발행 상태를 중앙에서 제어합니다.</CardDescription>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <Button variant="outline" className="h-9 rounded-none px-4" disabled>
+                <Link href="/admin/categories" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-none px-4")}>
                   카테고리 관리
-                </Button>
+                </Link>
                 <Link href="/admin/new" className={cn(buttonVariants({ variant: "default" }), "h-9 rounded-none px-4")}>
                   새 글 작성
                 </Link>

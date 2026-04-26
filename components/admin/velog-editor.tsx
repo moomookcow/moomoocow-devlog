@@ -30,6 +30,7 @@ import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/clie
 type VelogEditorProps = {
   action: (formData: FormData) => void;
   initialPost?: AdminPost;
+  categoryOptions?: Array<{ id: string; value: string; label: string; parentId: string | null }>;
 };
 
 const EDITOR_IMAGE_BUCKET = "post-thumbnails";
@@ -145,7 +146,13 @@ function MarkdownImage({ src, alt }: { src?: string | Blob; alt?: string }) {
   return <img src={src} alt={alt ?? "markdown image"} loading="lazy" decoding="async" />;
 }
 
-export default function VelogEditor({ action, initialPost }: VelogEditorProps) {
+const DEFAULT_CATEGORY_OPTIONS = [
+  { id: "none-frontend", value: "frontend", label: "프론트엔드", parentId: null },
+  { id: "none-backend", value: "backend", label: "백엔드", parentId: null },
+  { id: "none-fullstack", value: "fullstack", label: "풀스택", parentId: null },
+];
+
+export default function VelogEditor({ action, initialPost, categoryOptions = DEFAULT_CATEGORY_OPTIONS }: VelogEditorProps) {
   const formId = "admin-post-editor-form";
   const isEditMode = Boolean(initialPost);
   const [content, setContent] = useState<string>(initialPost?.contentMdx ?? "# 새 글\n\n");
@@ -253,21 +260,43 @@ export default function VelogEditor({ action, initialPost }: VelogEditorProps) {
     el.style.height = `${el.scrollHeight}px`;
   }, [content]);
 
-  const categoryOptions = [
-    { value: "none", label: "미지정" },
-    { value: "frontend", label: "프론트엔드" },
-    { value: "backend", label: "백엔드" },
-    { value: "fullstack", label: "풀스택" },
-    { value: "infra", label: "인프라" },
-    { value: "devops", label: "데브옵스" },
-    { value: "database", label: "데이터베이스" },
-    { value: "ai-ml", label: "AI/ML" },
-    { value: "career", label: "커리어" },
-    { value: "retrospective", label: "회고" },
-    { value: "troubleshooting", label: "트러블슈팅" },
-  ];
-  const selectedCategoryLabel =
-    categoryOptions.find((category) => category.value === publishCategory)?.label ?? "카테고리 선택";
+  const categoryById = useMemo(
+    () => new Map(categoryOptions.map((category) => [category.id, category])),
+    [categoryOptions],
+  );
+  const categoryByValue = useMemo(
+    () => new Map(categoryOptions.map((category) => [category.value, category])),
+    [categoryOptions],
+  );
+  const rootCategories = useMemo(
+    () => categoryOptions.filter((category) => category.parentId === null),
+    [categoryOptions],
+  );
+  const selectedCategory = categoryByValue.get(publishCategory) ?? null;
+  const selectedPath = useMemo(() => {
+    if (!selectedCategory) return [] as Array<{ id: string; value: string; label: string; parentId: string | null }>;
+    const path = [selectedCategory];
+    let cursor = selectedCategory;
+    for (let depth = 0; depth < 4; depth += 1) {
+      if (!cursor.parentId) break;
+      const parent = categoryById.get(cursor.parentId);
+      if (!parent) break;
+      path.push(parent);
+      cursor = parent;
+    }
+    return path.reverse();
+  }, [selectedCategory, categoryById]);
+  const selectedRootId = selectedPath[0]?.id ?? "none";
+  const selectedChildId = selectedPath[1]?.id ?? "none";
+  const selectedCategoryLabel = selectedCategory?.label ?? "카테고리 선택";
+  const childCategories = useMemo(() => {
+    if (selectedRootId === "none") return [] as typeof categoryOptions;
+    return categoryOptions.filter((category) => category.parentId === selectedRootId);
+  }, [categoryOptions, selectedRootId]);
+  const grandChildCategories = useMemo(() => {
+    if (selectedChildId === "none") return [] as typeof categoryOptions;
+    return categoryOptions.filter((category) => category.parentId === selectedChildId);
+  }, [categoryOptions, selectedChildId]);
   const isKeepingExistingThumbnail =
     Boolean(initialPost?.thumbnailUrl) &&
     publishThumbnailUrl === initialPost?.thumbnailUrl &&
@@ -693,28 +722,107 @@ export default function VelogEditor({ action, initialPost }: VelogEditorProps) {
 
               <div className="grid gap-2">
                 <label className="korean-display text-base text-muted-foreground">카테고리</label>
-                <Select
-                  value={publishCategory}
-                  onValueChange={(value) => {
-                    if (!value) return;
-                    setPublishCategory(value);
-                  }}
-                >
-                  <SelectTrigger className="korean-display surface-panel h-20 w-full rounded-none border-2 bg-card/30 px-4 text-lg data-[size=default]:h-20 data-[size=sm]:h-20">
-                    <SelectValue>{selectedCategoryLabel}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-none">
-                    {categoryOptions.map((category) => (
-                      <SelectItem
-                        key={category.value}
-                        value={category.value}
-                        className="korean-display min-h-14 py-3 text-lg"
-                      >
-                        {category.label}
+                <div className="grid gap-2">
+                  <Select
+                    value={selectedRootId}
+                    onValueChange={(value) => {
+                      if (!value || value === "none") {
+                        setPublishCategory("none");
+                        return;
+                      }
+                      const selected = categoryById.get(value);
+                      if (!selected) return;
+                      setPublishCategory(selected.value);
+                    }}
+                  >
+                    <SelectTrigger className="korean-display surface-panel h-14 w-full rounded-none border-2 bg-card/30 px-4 text-base data-[size=default]:h-14 data-[size=sm]:h-14">
+                      <SelectValue>{selectedRootId === "none" ? "대분류 선택" : selectedPath[0]?.label}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none">
+                      <SelectItem value="none" className="korean-display min-h-11 py-2 text-base">
+                        미지정
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      {rootCategories.map((category) => (
+                        <SelectItem
+                          key={category.id}
+                          value={category.id}
+                          className="korean-display min-h-11 py-2 text-base"
+                        >
+                          {category.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {childCategories.length > 0 ? (
+                    <Select
+                      value={selectedChildId}
+                      onValueChange={(value) => {
+                        if (!value || value === "none") {
+                          const root = categoryById.get(selectedRootId);
+                          setPublishCategory(root?.value ?? "none");
+                          return;
+                        }
+                        const selected = categoryById.get(value);
+                        if (!selected) return;
+                        setPublishCategory(selected.value);
+                      }}
+                    >
+                      <SelectTrigger className="korean-display surface-panel h-14 w-full rounded-none border-2 bg-card/30 px-4 text-base data-[size=default]:h-14 data-[size=sm]:h-14">
+                        <SelectValue>{selectedChildId === "none" ? "중분류 선택" : selectedPath[1]?.label}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="rounded-none">
+                        <SelectItem value="none" className="korean-display min-h-11 py-2 text-base">
+                          대분류만 사용
+                        </SelectItem>
+                        {childCategories.map((category) => (
+                          <SelectItem
+                            key={category.id}
+                            value={category.id}
+                            className="korean-display min-h-11 py-2 text-base"
+                          >
+                            {category.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : null}
+
+                  {grandChildCategories.length > 0 ? (
+                    <Select
+                      value={selectedCategory?.id ?? "none"}
+                      onValueChange={(value) => {
+                        if (!value || value === "none") {
+                          const child = categoryById.get(selectedChildId);
+                          setPublishCategory(child?.value ?? "none");
+                          return;
+                        }
+                        const selected = categoryById.get(value);
+                        if (!selected) return;
+                        setPublishCategory(selected.value);
+                      }}
+                    >
+                      <SelectTrigger className="korean-display surface-panel h-14 w-full rounded-none border-2 bg-card/30 px-4 text-base data-[size=default]:h-14 data-[size=sm]:h-14">
+                        <SelectValue>{selectedPath[2]?.label ?? "소분류 선택"}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="rounded-none">
+                        <SelectItem value="none" className="korean-display min-h-11 py-2 text-base">
+                          중분류만 사용
+                        </SelectItem>
+                        {grandChildCategories.map((category) => (
+                          <SelectItem
+                            key={category.id}
+                            value={category.id}
+                            className="korean-display min-h-11 py-2 text-base"
+                          >
+                            {category.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : null}
+                </div>
+                <p className="korean-display text-sm text-muted-foreground">최종 선택 카테고리: {selectedCategoryLabel}</p>
               </div>
             </div>
           </div>

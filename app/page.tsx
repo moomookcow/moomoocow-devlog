@@ -5,6 +5,8 @@ import CategoryPanel from "@/components/shared/category-panel";
 import RightFeedPanel from "@/components/shared/right-feed-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
+import { listActiveCategories } from "@/lib/categories";
 import { sharedCategoryGroups } from "@/lib/mock-data";
 import { listPublishedPosts } from "@/lib/posts";
 import { createClient } from "@/lib/supabase/server";
@@ -133,11 +135,21 @@ function formatDate(value: string | null) {
 export default async function HomePage() {
   const supabase = await createClient();
   let publishedPosts = [] as Awaited<ReturnType<typeof listPublishedPosts>>;
+  let categoryGroups = sharedCategoryGroups;
 
   try {
     publishedPosts = await listPublishedPosts(supabase, 50);
   } catch {
     publishedPosts = [];
+  }
+  try {
+    const categories = await listActiveCategories(supabase, 200);
+    const groups = buildCategoryPanelGroups(categories, publishedPosts, { hrefBase: "/posts" });
+    if (groups.length > 0) {
+      categoryGroups = groups;
+    }
+  } catch {
+    categoryGroups = sharedCategoryGroups;
   }
 
   const visiblePosts =
@@ -165,7 +177,7 @@ export default async function HomePage() {
 
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
         <aside className="self-start space-y-4">
-          <CategoryPanel groups={sharedCategoryGroups} />
+          <CategoryPanel groups={categoryGroups} />
         </aside>
 
         <section className="space-y-3">
