@@ -1,3 +1,4 @@
+import NextImage from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
@@ -21,7 +22,36 @@ type AdminPostDetailPageProps = {
 const SUCCESS_MESSAGE: Record<string, string> = {
   draft: "임시저장이 완료되었습니다.",
   published: "출간이 완료되었습니다.",
+  updated_draft: "임시저장 수정이 완료되었습니다.",
+  updated_published: "출간 글 수정이 완료되었습니다.",
 };
+const SUPABASE_STORAGE_PUBLIC_PATH = "/storage/v1/object/public/post-thumbnails/";
+
+function isSupabaseStorageImage(url: string) {
+  return url.includes(SUPABASE_STORAGE_PUBLIC_PATH);
+}
+
+function MarkdownImage({ src, alt }: { src?: string | Blob; alt?: string }) {
+  if (!src || typeof src !== "string") return null;
+
+  if (isSupabaseStorageImage(src)) {
+    return (
+      <span className="my-5 block w-full overflow-hidden rounded-none">
+        <NextImage
+          src={src}
+          alt={alt ?? "markdown image"}
+          width={1600}
+          height={900}
+          sizes="(max-width: 1024px) 100vw, 1024px"
+          className="h-auto w-full object-contain"
+        />
+      </span>
+    );
+  }
+
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt={alt ?? "markdown image"} loading="lazy" decoding="async" />;
+}
 
 export default async function AdminPostDetailPage({ params, searchParams }: AdminPostDetailPageProps) {
   const supabase = await createClient();
@@ -66,6 +96,12 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
             <Link href="/admin" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-md px-4")}>
               대시보드로
             </Link>
+            <Link
+              href={`/admin/new?slug=${encodeURIComponent(post.slug)}`}
+              className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-md px-4")}
+            >
+              글 수정
+            </Link>
             <Link href="/admin/new" className={cn(buttonVariants({ variant: "default" }), "h-9 rounded-md px-4")}>
               새 글 작성
             </Link>
@@ -75,7 +111,14 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
 
       <Card>
         <CardContent className="markdown-preview p-6">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.contentMdx}</ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              img: ({ src, alt }) => <MarkdownImage src={src} alt={alt} />,
+            }}
+          >
+            {post.contentMdx}
+          </ReactMarkdown>
         </CardContent>
       </Card>
     </main>

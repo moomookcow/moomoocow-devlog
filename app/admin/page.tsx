@@ -224,7 +224,7 @@ export default async function AdminPage() {
                             {post.status.toUpperCase()}
                           </Badge>
                           <Link
-                            href={`/admin/posts/${encodeURIComponent(post.slug)}`}
+                            href={`/admin/new?slug=${encodeURIComponent(post.slug)}`}
                             className={cn(buttonVariants({ variant: "outline" }), "h-8 rounded-none px-3")}
                           >
                             편집

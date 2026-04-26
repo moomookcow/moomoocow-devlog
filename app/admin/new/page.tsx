@@ -1,5 +1,6 @@
 import VelogEditor from "@/components/admin/velog-editor";
 import { requireAdminOrRedirect } from "@/lib/admin-auth";
+import { getPostBySlug } from "@/lib/posts";
 import { createClient } from "@/lib/supabase/server";
 
 import { createPostAction } from "../actions";
@@ -12,6 +13,7 @@ type AdminNewPageProps = {
     success?: string;
     debug_code?: string;
     debug_message?: string;
+    slug?: string;
   }>;
 };
 
@@ -28,6 +30,7 @@ const ERROR_MESSAGE: Record<string, string> = {
     "SUPABASE_SECRET_KEY가 없어 서버 업로드를 수행할 수 없습니다. URL 입력 또는 환경변수를 확인해주세요.",
   thumbnail_upload_failed:
     "썸네일 업로드에 실패했습니다. Storage 버킷(post-thumbnails)과 정책을 확인해주세요.",
+  post_not_found: "수정할 글을 찾지 못했습니다.",
 };
 
 const SUCCESS_MESSAGE: Record<string, string> = {
@@ -42,6 +45,9 @@ export default async function AdminNewPage({ searchParams }: AdminNewPageProps) 
   const params = searchParams ? await searchParams : undefined;
   const errorMessage = params?.error ? ERROR_MESSAGE[params.error] : null;
   const successMessage = params?.success ? SUCCESS_MESSAGE[params.success] : null;
+  const targetSlug = String(params?.slug ?? "").trim();
+  const initialPost = targetSlug ? await getPostBySlug(supabase, targetSlug) : null;
+  const finalErrorMessage = targetSlug && !initialPost ? ERROR_MESSAGE.post_not_found : errorMessage;
   const debugHint =
     params?.error === "save_failed" && (params?.debug_code || params?.debug_message)
       ? `debug_code=${params?.debug_code ?? "-"} / ${params?.debug_message ?? "-"}`
@@ -49,9 +55,9 @@ export default async function AdminNewPage({ searchParams }: AdminNewPageProps) 
 
   return (
     <main className="fixed inset-0 z-[60] flex min-h-0 flex-col overflow-hidden bg-background px-4 py-4 sm:px-6 lg:px-8">
-      {errorMessage ? (
+      {finalErrorMessage ? (
         <div className="mb-3 shrink-0 border border-destructive/35 px-3 py-2 text-sm text-destructive" role="alert">
-          <p>{errorMessage}</p>
+          <p>{finalErrorMessage}</p>
           {debugHint ? <p className="mt-1 text-xs opacity-90">{debugHint}</p> : null}
         </div>
       ) : null}
@@ -62,7 +68,7 @@ export default async function AdminNewPage({ searchParams }: AdminNewPageProps) 
       ) : null}
 
       <div className="min-h-0 flex-1 overflow-hidden">
-        <VelogEditor action={createPostAction} />
+        <VelogEditor action={createPostAction} initialPost={initialPost ?? undefined} />
       </div>
     </main>
   );

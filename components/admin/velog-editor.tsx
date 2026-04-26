@@ -1,7 +1,8 @@
 "use client";
 
+import NextImage from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -22,24 +23,127 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { normalizeSlugInput, type AdminPost } from "@/lib/posts";
+import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type VelogEditorProps = {
   action: (formData: FormData) => void;
+  initialPost?: AdminPost;
 };
 
-export default function VelogEditor({ action }: VelogEditorProps) {
+const EDITOR_IMAGE_BUCKET = "post-thumbnails";
+const EDITOR_IMAGE_MAX_WIDTH = 1600;
+const EDITOR_IMAGE_MAX_HEIGHT = 1600;
+const EDITOR_IMAGE_QUALITY = 0.82;
+const SUPABASE_STORAGE_PUBLIC_PATH = "/storage/v1/object/public/post-thumbnails/";
+
+function sanitizeUploadName(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9.\-_]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+async function loadImageElement(src: string): Promise<HTMLImageElement> {
+  const image = new Image();
+  image.decoding = "async";
+
+  return await new Promise((resolve, reject) => {
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("IMAGE_LOAD_FAILED"));
+    image.src = src;
+  });
+}
+
+async function optimizeImageFile(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+  if (file.type === "image/gif" || file.type === "image/svg+xml") return file;
+
+  const objectUrl = URL.createObjectURL(file);
+
+  try {
+    const image = await loadImageElement(objectUrl);
+    const width = image.naturalWidth;
+    const height = image.naturalHeight;
+    if (!width || !height) return file;
+
+    const scale = Math.min(1, EDITOR_IMAGE_MAX_WIDTH / width, EDITOR_IMAGE_MAX_HEIGHT / height);
+    const targetWidth = Math.max(1, Math.round(width * scale));
+    const targetHeight = Math.max(1, Math.round(height * scale));
+    const resized = targetWidth !== width || targetHeight !== height;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const context = canvas.getContext("2d");
+    if (!context) return file;
+
+    context.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/webp", EDITOR_IMAGE_QUALITY);
+    });
+
+    if (!blob) return file;
+
+    const compressedEnough = blob.size < file.size * 0.98;
+    if (!resized && !compressedEnough) return file;
+
+    const baseName = (file.name || "image").replace(/\.[^.]+$/, "") || "image";
+    return new File([blob], `${sanitizeUploadName(baseName)}.webp`, { type: "image/webp" });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+function isSupabaseStorageImage(url: string) {
+  return url.includes(SUPABASE_STORAGE_PUBLIC_PATH);
+}
+
+function MarkdownImage({ src, alt }: { src?: string | Blob; alt?: string }) {
+  if (!src || typeof src !== "string") return null;
+
+  if (isSupabaseStorageImage(src)) {
+    return (
+      <span className="my-5 block w-full overflow-hidden rounded-none">
+        <NextImage
+          src={src}
+          alt={alt ?? "markdown image"}
+          width={1600}
+          height={900}
+          sizes="(max-width: 1024px) 100vw, 50vw"
+          className="h-auto w-full object-contain"
+        />
+      </span>
+    );
+  }
+
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt={alt ?? "markdown image"} loading="lazy" decoding="async" />;
+}
+
+export default function VelogEditor({ action, initialPost }: VelogEditorProps) {
   const formId = "admin-post-editor-form";
-  const [content, setContent] = useState<string>("# 새 글\n\n");
-  const [title, setTitle] = useState<string>("");
-  const [tags, setTags] = useState<string[]>([]);
+  const isEditMode = Boolean(initialPost);
+  const [content, setContent] = useState<string>(initialPost?.contentMdx ?? "# 새 글\n\n");
+  const [title, setTitle] = useState<string>(initialPost?.title ?? "");
+  const [tags, setTags] = useState<string[]>(initialPost?.tags ?? []);
   const [tagInput, setTagInput] = useState<string>("");
   const [publishOpen, setPublishOpen] = useState(false);
-  const [publishTitle, setPublishTitle] = useState("");
-  const [publishSummary, setPublishSummary] = useState("");
-  const [publishThumbnailUrl, setPublishThumbnailUrl] = useState("");
+  const [publishTitle, setPublishTitle] = useState(initialPost?.title ?? "");
+  const [publishSlug, setPublishSlug] = useState(initialPost?.slug ?? "");
+  const [isPublishSlugDirty, setIsPublishSlugDirty] = useState(false);
+  const [publishSummary, setPublishSummary] = useState(initialPost?.summary ?? "");
+  const [publishThumbnailUrl, setPublishThumbnailUrl] = useState(initialPost?.thumbnailUrl ?? "");
   const [publishThumbnailFileName, setPublishThumbnailFileName] = useState("");
-  const [publishVisibility, setPublishVisibility] = useState("public");
-  const [publishCategory, setPublishCategory] = useState("none");
+  const [publishVisibility, setPublishVisibility] = useState(initialPost?.visibility ?? "public");
+  const [publishCategory, setPublishCategory] = useState(initialPost?.category ?? "none");
+  const [isThumbnailOptimizing, setIsThumbnailOptimizing] = useState(false);
+  const [thumbnailOptimizeNotice, setThumbnailOptimizeNotice] = useState<string | null>(null);
+  const [isEditorImageUploading, setIsEditorImageUploading] = useState(false);
+  const [editorImageError, setEditorImageError] = useState<string | null>(null);
+  const [isEditorDragOver, setIsEditorDragOver] = useState(false);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const thumbnailFileRef = useRef<HTMLInputElement | null>(null);
 
@@ -119,6 +223,111 @@ export default function VelogEditor({ action }: VelogEditorProps) {
   ];
   const selectedCategoryLabel =
     categoryOptions.find((category) => category.value === publishCategory)?.label ?? "카테고리 선택";
+  const isKeepingExistingThumbnail =
+    Boolean(initialPost?.thumbnailUrl) &&
+    publishThumbnailUrl === initialPost?.thumbnailUrl &&
+    publishThumbnailFileName.length === 0;
+
+  function insertMarkdownAtCursor(markdown: string) {
+    const textarea = contentRef.current;
+    const start = textarea?.selectionStart ?? content.length;
+    const end = textarea?.selectionEnd ?? content.length;
+
+    setContent((prev) => `${prev.slice(0, start)}${markdown}${prev.slice(end)}`);
+
+    requestAnimationFrame(() => {
+      if (!textarea) return;
+      const nextPos = start + markdown.length;
+      textarea.focus();
+      textarea.setSelectionRange(nextPos, nextPos);
+    });
+  }
+
+  async function uploadEditorImage(file: File) {
+    if (!file) return;
+
+    setEditorImageError(null);
+
+    if (!file.type.startsWith("image/")) {
+      setEditorImageError("이미지 파일만 업로드할 수 있습니다.");
+      return;
+    }
+
+    try {
+      setIsEditorImageUploading(true);
+      const supabase = createSupabaseBrowserClient();
+      const optimizedFile = await optimizeImageFile(file);
+      const safeName = sanitizeUploadName(optimizedFile.name || "image");
+      const ext = safeName.includes(".") ? safeName.split(".").pop() : "jpg";
+      const path = `editor/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+
+      const uploaded = await supabase.storage.from(EDITOR_IMAGE_BUCKET).upload(path, optimizedFile, {
+        cacheControl: "3600",
+        contentType: optimizedFile.type,
+        upsert: false,
+      });
+
+      if (uploaded.error) {
+        throw uploaded.error;
+      }
+
+      const publicUrl = supabase.storage.from(EDITOR_IMAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+      if (!publicUrl) {
+        throw new Error("NO_PUBLIC_URL");
+      }
+
+      const alt = (file.name || "image").replace(/\.[^.]+$/, "");
+      insertMarkdownAtCursor(`\n![${alt}](${publicUrl})\n`);
+    } catch {
+      setEditorImageError("본문 이미지 업로드에 실패했습니다. Storage 버킷/정책을 확인해주세요.");
+    } finally {
+      setIsEditorImageUploading(false);
+    }
+  }
+
+  async function onThumbnailFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    setThumbnailOptimizeNotice(null);
+
+    if (!file) {
+      setPublishThumbnailFileName("");
+      return;
+    }
+
+    try {
+      setIsThumbnailOptimizing(true);
+      const optimizedFile = await optimizeImageFile(file);
+
+      if (typeof DataTransfer !== "undefined") {
+        const transfer = new DataTransfer();
+        transfer.items.add(optimizedFile);
+        input.files = transfer.files;
+      } else {
+        setThumbnailOptimizeNotice("브라우저 제한으로 원본 파일을 사용합니다.");
+      }
+
+      setPublishThumbnailFileName(optimizedFile.name);
+      setPublishThumbnailUrl("");
+    } catch (error) {
+      console.warn("[thumbnail-optimize] fallback to original file", error);
+      setPublishThumbnailFileName(file.name);
+      setThumbnailOptimizeNotice("원본 파일로 업로드합니다.");
+    } finally {
+      setIsThumbnailOptimizing(false);
+    }
+  }
+
+  async function onEditorDrop(event: DragEvent<HTMLTextAreaElement>) {
+    event.preventDefault();
+    setIsEditorDragOver(false);
+    if (isEditorImageUploading) return;
+
+    const file = event.dataTransfer.files?.[0];
+    if (!file) return;
+
+    await uploadEditorImage(file);
+  }
 
   return (
     <form
@@ -187,7 +396,9 @@ export default function VelogEditor({ action }: VelogEditorProps) {
 
       <input name="summary" value={summary} readOnly hidden />
       <input name="tags" value={serializedTags} readOnly hidden />
+      {isEditMode ? <input name="slug" value={initialPost?.slug ?? ""} readOnly hidden /> : null}
       <input name="publishTitle" value={publishTitle} readOnly hidden />
+      <input name="publishSlug" value={publishSlug} readOnly hidden />
       <input name="publishSummary" value={publishSummary} readOnly hidden />
       <input name="publishThumbnailUrl" value={publishThumbnailUrl} readOnly hidden />
       <input name="publishThumbnailFileName" value={publishThumbnailFileName} readOnly hidden />
@@ -195,24 +406,52 @@ export default function VelogEditor({ action }: VelogEditorProps) {
       <input name="publishCategory" value={publishCategory} readOnly hidden />
 
       <div className="grid min-h-0 flex-1 gap-0 overflow-hidden lg:grid-cols-2">
-        <div className="min-h-0 overflow-hidden">
+        <div className="relative min-h-0 overflow-hidden">
+          {isEditorImageUploading ? (
+            <div className="korean-display border-b border-border/50 px-5 py-2 text-xs text-muted-foreground">
+              이미지 업로드 중...
+            </div>
+          ) : null}
+          {editorImageError ? (
+            <div className="korean-display border-b border-destructive/40 px-5 py-2 text-xs text-destructive">
+              {editorImageError}
+            </div>
+          ) : null}
           <ScrollArea className="h-full w-full">
             <Textarea
               ref={contentRef}
               name="contentMdx"
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              onDragOver={(event) => {
+                event.preventDefault();
+                if (!isEditorDragOver) setIsEditorDragOver(true);
+              }}
+              onDragLeave={() => setIsEditorDragOver(false)}
+              onDrop={onEditorDrop}
               className="h-auto min-h-full resize-none overflow-hidden rounded-none border-0 bg-transparent p-5 font-mono text-[20px] leading-8 shadow-none focus-visible:ring-0 md:text-[26px] md:leading-[2.2rem] dark:bg-transparent"
               placeholder=""
               required
             />
           </ScrollArea>
+          {isEditorDragOver ? (
+            <div className="korean-display pointer-events-none absolute bottom-3 left-3 rounded-none border border-border/70 bg-card/90 px-2 py-1 text-[11px] text-foreground/90">
+              이미지를 놓으면 본문에 삽입됩니다
+            </div>
+          ) : null}
         </div>
 
         <div className="min-h-0 overflow-hidden border-l border-border/55">
           <ScrollArea className="h-full w-full">
             <div className="markdown-preview p-5">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  img: ({ src, alt }) => <MarkdownImage src={src} alt={alt} />,
+                }}
+              >
+                {content}
+              </ReactMarkdown>
             </div>
           </ScrollArea>
         </div>
@@ -230,51 +469,58 @@ export default function VelogEditor({ action }: VelogEditorProps) {
           className="h-10 rounded-none px-4"
           onClick={() => {
             setPublishTitle(title);
+            setPublishSlug(normalizeSlugInput(title));
+            setIsPublishSlugDirty(false);
             setPublishSummary(summary);
             setPublishThumbnailFileName("");
             setPublishOpen(true);
           }}
         >
-          출간하기
+          {isEditMode ? "수정하기" : "출간하기"}
         </Button>
       </div>
 
       <Dialog open={publishOpen} onOpenChange={setPublishOpen}>
         <DialogContent className="rounded-none p-0 sm:max-w-4xl lg:max-w-5xl">
           <DialogHeader className="korean-display gap-3 border-b border-border/60 px-8 pt-7 pb-6">
-            <DialogTitle className="korean-display text-3xl leading-tight">출간 설정</DialogTitle>
+            <DialogTitle className="korean-display text-3xl leading-tight">{isEditMode ? "수정 설정" : "출간 설정"}</DialogTitle>
             <DialogDescription className="korean-display text-base">
-              최종 메타 정보를 확인한 뒤 출간하세요.
+              {isEditMode ? "수정할 메타 정보를 확인한 뒤 저장하세요." : "최종 메타 정보를 확인한 뒤 출간하세요."}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-6 px-8 py-7">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <div className="grid gap-2.5">
+              <div className="grid content-start gap-1.5">
                 <label htmlFor="publishThumbnailFile" className="korean-display text-base text-muted-foreground">
                   썸네일 업로드
                 </label>
-                <div className="flex items-center gap-3">
-                  <Input
-                    ref={thumbnailFileRef}
-                    id="publishThumbnailFile"
-                    name="publishThumbnailFile"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.currentTarget.files?.[0];
-                      setPublishThumbnailFileName(file?.name ?? "");
-                      if (file) setPublishThumbnailUrl("");
-                    }}
-                    className="korean-display h-11 rounded-none text-base file:mr-3 file:rounded-none file:border-0 file:bg-muted file:px-3 file:py-1.5"
-                  />
-                </div>
-                {publishThumbnailFileName ? (
-                  <p className="korean-display text-sm text-muted-foreground">선택된 파일: {publishThumbnailFileName}</p>
+                <Input
+                  ref={thumbnailFileRef}
+                  form={formId}
+                  id="publishThumbnailFile"
+                  name="publishThumbnailFile"
+                  type="file"
+                  accept="image/*"
+                  onChange={onThumbnailFileChange}
+                  className="korean-display h-11 rounded-none text-base file:mr-3 file:rounded-none file:border-0 file:bg-muted file:px-3 file:py-1.5"
+                />
+                {isThumbnailOptimizing || thumbnailOptimizeNotice || publishThumbnailFileName ? (
+                  <div className="space-y-1 pt-0.5">
+                    {isThumbnailOptimizing ? (
+                      <p className="korean-display text-sm text-muted-foreground">썸네일 최적화 중...</p>
+                    ) : null}
+                    {thumbnailOptimizeNotice ? (
+                      <p className="korean-display text-sm text-muted-foreground">{thumbnailOptimizeNotice}</p>
+                    ) : null}
+                    {publishThumbnailFileName ? (
+                      <p className="korean-display text-sm text-muted-foreground">선택된 파일: {publishThumbnailFileName}</p>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
 
-              <div className="grid gap-2.5">
+              <div className="grid content-start gap-1.5">
                 <label htmlFor="publishThumbnailUrl" className="korean-display text-base text-muted-foreground">
                   썸네일 URL (선택)
                 </label>
@@ -291,6 +537,23 @@ export default function VelogEditor({ action }: VelogEditorProps) {
                   placeholder="https://..."
                   className="korean-display h-11 rounded-none text-base"
                 />
+                {isKeepingExistingThumbnail || publishThumbnailUrl ? (
+                  <div className="space-y-2 pt-0.5">
+                    {isKeepingExistingThumbnail ? (
+                      <p className="korean-display text-sm text-foreground/85">현재 썸네일 유지됨</p>
+                    ) : null}
+                    {publishThumbnailUrl ? (
+                      <div className="surface-subtle rounded-none border p-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={publishThumbnailUrl}
+                          alt="썸네일 미리보기"
+                          className="h-32 w-full rounded-none object-cover"
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -301,9 +564,31 @@ export default function VelogEditor({ action }: VelogEditorProps) {
               <Input
                 id="publishTitle"
                 value={publishTitle}
-                onChange={(e) => setPublishTitle(e.target.value)}
+                onChange={(e) => {
+                  const nextTitle = e.target.value;
+                  setPublishTitle(nextTitle);
+                  if (!isPublishSlugDirty) {
+                    setPublishSlug(normalizeSlugInput(nextTitle));
+                  }
+                }}
                 placeholder="출간 제목"
                 className="korean-display h-11 rounded-none text-lg"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <label htmlFor="publishSlug" className="korean-display text-base text-muted-foreground">
+                URL 슬러그
+              </label>
+              <Input
+                id="publishSlug"
+                value={publishSlug}
+                onChange={(e) => {
+                  setPublishSlug(normalizeSlugInput(e.target.value));
+                  setIsPublishSlugDirty(true);
+                }}
+                placeholder="url-path-slug"
+                className="korean-display h-11 rounded-none font-mono text-base"
               />
             </div>
 
@@ -397,7 +682,7 @@ export default function VelogEditor({ action }: VelogEditorProps) {
               className="korean-display h-12 rounded-none px-6 text-base disabled:pointer-events-auto disabled:cursor-not-allowed"
               disabled={!title.trim() || !content.trim()}
             >
-              출간하기
+              {isEditMode ? "수정 저장" : "출간하기"}
             </Button>
           </DialogFooter>
         </DialogContent>

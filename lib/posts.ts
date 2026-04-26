@@ -19,6 +19,9 @@ export type AdminPost = {
   createdAt: string | null;
   updatedAt: string | null;
   publishedAt: string | null;
+  category: string | null;
+  visibility: "public" | "private";
+  thumbnailUrl: string | null;
 };
 
 type PostRow = {
@@ -32,7 +35,21 @@ type PostRow = {
   created_at: string | null;
   updated_at: string | null;
   published_at: string | null;
+  category: string | null;
+  visibility: "public" | "private" | null;
+  thumbnail_url: string | null;
 };
+
+function slugCandidates(slug: string) {
+  const values = [slug];
+  try {
+    const decoded = decodeURIComponent(slug);
+    if (decoded && decoded !== slug) values.push(decoded);
+  } catch {
+    // keep original slug only
+  }
+  return values;
+}
 
 function mapPost(row: PostRow): AdminPost {
   return {
@@ -46,6 +63,9 @@ function mapPost(row: PostRow): AdminPost {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     publishedAt: row.published_at,
+    category: row.category,
+    visibility: row.visibility ?? "public",
+    thumbnailUrl: row.thumbnail_url,
   };
 }
 
@@ -78,6 +98,59 @@ export function slugifyTitle(title: string): string {
   return `post-${Date.now()}`;
 }
 
+export function normalizeSlugInput(value: string): string {
+  const compact = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\uac00-\ud7a3\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  return compact;
+}
+
+function isMissingAliasTableError(error: unknown): boolean {
+  const code = (error as { code?: string })?.code;
+  return code === "PGRST205" || code === "42P01";
+}
+
+async function aliasExists(supabase: SupabaseQueryClient, oldSlug: string): Promise<boolean> {
+  const result = await supabase
+    .from("post_slug_aliases")
+    .select("old_slug")
+    .eq("old_slug", oldSlug)
+    .maybeSingle();
+
+  if (result.error) {
+    if (isMissingAliasTableError(result.error)) {
+      return false;
+    }
+    throw result.error;
+  }
+
+  return Boolean(result.data?.old_slug);
+}
+
+async function isSlugTaken(supabase: SupabaseQueryClient, slug: string): Promise<boolean> {
+  return (await slugExists(supabase, slug)) || (await aliasExists(supabase, slug));
+}
+
+async function makeUniqueSlugConsideringAliases(
+  supabase: SupabaseQueryClient,
+  baseSlug: string,
+): Promise<string> {
+  let candidate = baseSlug;
+  let index = 2;
+
+  while (await isSlugTaken(supabase, candidate)) {
+    candidate = `${baseSlug}-${index}`;
+    index += 1;
+  }
+
+  return candidate;
+}
+
 async function slugExists(supabase: SupabaseQueryClient, slug: string): Promise<boolean> {
   const { data, error } = (await supabase
     .from("posts")
@@ -107,7 +180,7 @@ async function makeUniqueSlug(supabase: SupabaseQueryClient, baseSlug: string): 
 export async function listAdminPosts(supabase: SupabaseQueryClient, limit = 50): Promise<AdminPost[]> {
   const { data, error } = await supabase
     .from("posts")
-    .select("id, slug, title, summary, content_mdx, tags, status, created_at, updated_at, published_at")
+    .select("id, slug, title, summary, content_mdx, tags, status, created_at, updated_at, published_at, category, visibility, thumbnail_url")
     .order("updated_at", { ascending: false, nullsFirst: false })
     .limit(limit);
 
@@ -122,17 +195,8 @@ export async function getPostBySlug(
   supabase: SupabaseQueryClient,
   slug: string,
 ): Promise<AdminPost | null> {
-  const selectFields = "id, slug, title, summary, content_mdx, tags, status, created_at, updated_at, published_at";
-  const candidates = (() => {
-    const values = [slug];
-    try {
-      const decoded = decodeURIComponent(slug);
-      if (decoded && decoded !== slug) values.push(decoded);
-    } catch {
-      // keep original slug only
-    }
-    return values;
-  })();
+  const selectFields = "id, slug, title, summary, content_mdx, tags, status, created_at, updated_at, published_at, category, visibility, thumbnail_url";
+  const candidates = slugCandidates(slug);
 
   let data: PostRow | null = null;
   let error: { message?: string } | null = null;
@@ -160,6 +224,50 @@ export async function getPostBySlug(
     throw error;
   }
 
+  if (!data) {
+    for (const candidate of candidates) {
+      const visited = new Set<string>();
+      let current = candidate;
+
+      for (let depth = 0; depth < 10; depth += 1) {
+        if (visited.has(current)) break;
+        visited.add(current);
+
+        const aliasResult = await supabase
+          .from("post_slug_aliases")
+          .select("new_slug")
+          .eq("old_slug", current)
+          .maybeSingle();
+
+        if (aliasResult.error) {
+          if (isMissingAliasTableError(aliasResult.error)) {
+            break;
+          }
+          throw aliasResult.error;
+        }
+
+        const redirectedSlug = aliasResult.data?.new_slug;
+        if (!redirectedSlug) break;
+
+        const redirected = await supabase
+          .from("posts")
+          .select(selectFields)
+          .eq("slug", redirectedSlug)
+          .maybeSingle();
+
+        if (redirected.error) throw redirected.error;
+        if (redirected.data) {
+          data = redirected.data as PostRow;
+          break;
+        }
+
+        current = redirectedSlug;
+      }
+
+      if (data) break;
+    }
+  }
+
   if (!data) return null;
   return mapPost(data as PostRow);
 }
@@ -176,11 +284,13 @@ export async function createPost(
     visibility?: "public" | "private";
     category?: string | null;
     thumbnailUrl?: string | null;
+    preferredSlug?: string | null;
   },
 ): Promise<{ id: string; slug: string }> {
   const now = new Date().toISOString();
-  const baseSlug = slugifyTitle(input.title);
-  const slug = await makeUniqueSlug(supabase, baseSlug);
+  const preferred = normalizeSlugInput(input.preferredSlug ?? "");
+  const baseSlug = preferred || slugifyTitle(input.title);
+  const slug = await makeUniqueSlugConsideringAliases(supabase, baseSlug);
 
   const payload = {
     slug,
@@ -226,4 +336,119 @@ export async function createPost(
       throw error;
     }
   }
+}
+
+export async function updatePostBySlug(
+  supabase: SupabaseQueryClient,
+  slug: string,
+  input: {
+    title: string;
+    summary: string;
+    contentMdx: string;
+    status: PostStatus;
+    tagsRaw: string;
+    visibility?: "public" | "private";
+    category?: string | null;
+    thumbnailUrl?: string | null;
+    preferredSlug?: string | null;
+  },
+): Promise<{ id: string; slug: string }> {
+  const now = new Date().toISOString();
+  const candidates = slugCandidates(slug);
+  let currentPost: { id: string; slug: string } | null = null;
+
+  for (const candidate of candidates) {
+    const result = await supabase
+      .from("posts")
+      .select("id, slug")
+      .eq("slug", candidate)
+      .maybeSingle();
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    if (result.data?.id && result.data?.slug) {
+      currentPost = {
+        id: String(result.data.id),
+        slug: String(result.data.slug),
+      };
+      break;
+    }
+  }
+
+  if (!currentPost) {
+    throw new Error("POST_NOT_FOUND");
+  }
+
+  const preferred = normalizeSlugInput(input.preferredSlug ?? "");
+  const desiredBaseSlug = preferred || currentPost.slug;
+  const finalSlug =
+    desiredBaseSlug === currentPost.slug
+      ? currentPost.slug
+      : await makeUniqueSlugConsideringAliases(supabase, desiredBaseSlug);
+
+  const payload = {
+    slug: finalSlug,
+    title: input.title,
+    summary: input.summary || null,
+    content_mdx: input.contentMdx,
+    status: input.status,
+    tags: normalizeTags(input.tagsRaw),
+    updated_at: now,
+    published_at: input.status === "published" ? now : null,
+  };
+  const payloadWithMeta = {
+    ...payload,
+    category: input.category && input.category !== "none" ? input.category : null,
+    visibility: input.visibility ?? "public",
+    thumbnail_url: input.thumbnailUrl || null,
+  };
+
+  const updateWithPayload = async (updatePayload: typeof payload | typeof payloadWithMeta) => {
+    const { data, error } = await supabase
+      .from("posts")
+      .update(updatePayload)
+      .eq("id", currentPost.id)
+      .select("id, slug")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      id: String(data.id),
+      slug: String(data.slug),
+    };
+  };
+
+  let updated: { id: string; slug: string };
+  try {
+    updated = await updateWithPayload(payloadWithMeta);
+  } catch (error) {
+    try {
+      updated = await updateWithPayload(payload);
+    } catch {
+      throw error;
+    }
+  }
+
+  if (currentPost.slug !== updated.slug) {
+    const aliasResult = await supabase.from("post_slug_aliases").upsert(
+      {
+        post_id: updated.id,
+        old_slug: currentPost.slug,
+        new_slug: updated.slug,
+        created_at: now,
+      },
+      { onConflict: "old_slug" },
+    );
+
+    if (aliasResult.error && !isMissingAliasTableError(aliasResult.error)) {
+      throw aliasResult.error;
+    }
+  }
+
+  return updated;
 }

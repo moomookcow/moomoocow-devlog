@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { requireAdminOrRedirect } from "@/lib/admin-auth";
-import { createPost } from "@/lib/posts";
+import { createPost, updatePostBySlug } from "@/lib/posts";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 const THUMBNAIL_BUCKET = "post-thumbnails";
@@ -54,6 +54,8 @@ export async function createPostAction(formData: FormData) {
   const summary = String(formData.get("summary") ?? "").trim();
   const publishTitle = String(formData.get("publishTitle") ?? "").trim();
   const publishSummary = String(formData.get("publishSummary") ?? "").trim();
+  const publishSlug = String(formData.get("publishSlug") ?? "").trim();
+  const editingSlug = String(formData.get("slug") ?? "").trim();
   const publishThumbnailUrl = String(formData.get("publishThumbnailUrl") ?? "").trim();
   const publishVisibilityRaw = String(formData.get("publishVisibility") ?? "public");
   const publishVisibility = publishVisibilityRaw === "private" ? "private" : "public";
@@ -89,21 +91,39 @@ export async function createPostAction(formData: FormData) {
 
   let created: { id: string; slug: string };
   try {
-    created = await createPost(writeClient, {
-      title: finalTitle,
-      summary: finalSummary,
-      contentMdx,
-      status,
-      tagsRaw,
-      authorEmail: user.email ?? null,
-      visibility: publishVisibility,
-      category: publishCategory,
-      thumbnailUrl: finalThumbnailUrl || null,
-    });
+    if (editingSlug) {
+      created = await updatePostBySlug(writeClient, editingSlug, {
+        title: finalTitle,
+        summary: finalSummary,
+        contentMdx,
+        status,
+        tagsRaw,
+        visibility: publishVisibility,
+        category: publishCategory,
+        thumbnailUrl: finalThumbnailUrl || null,
+        preferredSlug: publishSlug || null,
+      });
+    } else {
+      created = await createPost(writeClient, {
+        title: finalTitle,
+        summary: finalSummary,
+        contentMdx,
+        status,
+        tagsRaw,
+        authorEmail: user.email ?? null,
+        visibility: publishVisibility,
+        category: publishCategory,
+        thumbnailUrl: finalThumbnailUrl || null,
+        preferredSlug: publishSlug || null,
+      });
+    }
 
   } catch (error) {
     const code = (error as { code?: string })?.code ?? "";
     const message = String((error as { message?: string })?.message ?? "");
+    if (message === "POST_NOT_FOUND") {
+      redirect("/admin/new?error=post_not_found");
+    }
     if (code === "42501") {
       redirect("/admin/new?error=save_forbidden");
     }
@@ -123,8 +143,10 @@ export async function createPostAction(formData: FormData) {
   }
 
   if (status === "published") {
-    redirect(`/admin/posts/${encodeURIComponent(created.slug)}?success=published`);
+    redirect(
+      `/admin/posts/${encodeURIComponent(created.slug)}?success=${editingSlug ? "updated_published" : "published"}`,
+    );
   }
 
-  redirect(`/admin/posts/${encodeURIComponent(created.slug)}?success=draft`);
+  redirect(`/admin/posts/${encodeURIComponent(created.slug)}?success=${editingSlug ? "updated_draft" : "draft"}`);
 }

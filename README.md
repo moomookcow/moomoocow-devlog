@@ -49,16 +49,16 @@
 - [ ] 카테고리 순서 변경
 
 ## 5) 새 글/수정/출간 UX (`/admin/new`)
-- [ ] Velog 스타일 에디터(좌 마크다운 / 우 미리보기)
-- [ ] 출간/수정 시 확인 다이얼로그 표시
-- [ ] 다이얼로그 필드: 썸네일(업로드 or URL)
-- [ ] 다이얼로그 필드: 제목
-- [ ] 다이얼로그 필드: 소개글
-- [ ] 다이얼로그 필드: 공개 설정
-- [ ] 다이얼로그 필드: 카테고리 지정
-- [ ] 다이얼로그 `출간하기`로 최종 저장/전송
+- [x] Velog 스타일 에디터(좌 마크다운 / 우 미리보기)
+- [x] 출간/수정 시 확인 다이얼로그 표시
+- [x] 다이얼로그 필드: 썸네일(업로드 or URL)
+- [x] 다이얼로그 필드: 제목
+- [x] 다이얼로그 필드: 소개글
+- [x] 다이얼로그 필드: 공개 설정
+- [x] 다이얼로그 필드: 카테고리 지정
+- [x] 다이얼로그 `출간하기`로 최종 저장/전송
 - [ ] 글 불러오기/저장 로딩 상태 명확화
-- [ ] 편집 버튼 -> `/admin/new?slug=...` 편집 모드 연결
+- [x] 편집 버튼 -> `/admin/new?slug=...` 편집 모드 연결
 
 ## 6) 인증/인가
 - [ ] `/admin/login -> /admin -> /admin/new` 안정 동작
@@ -68,21 +68,23 @@
 - [ ] 세션 만료/로그아웃 처리 안정화
 
 ## 7) 데이터 모델(Supabase 직접 사용, Prisma 미사용)
-- [ ] `posts` 테이블
+- [x] `posts` 테이블
 - [ ] `categories` 테이블
 - [ ] `tags` 테이블
 - [ ] `post_tags` 조인 테이블
 - [ ] `comments` 테이블(MVP)
 - [ ] `post_views` 집계 테이블
-- [ ] slug unique 규칙
-- [ ] draft/published 상태 규칙
+- [x] slug unique 규칙
+- [x] draft/published 상태 규칙
+- [x] `post-thumbnails` Storage 버킷/정책 SQL 마련
+- [x] slug alias 테이블/정책 SQL 마련 (`post_slug_aliases`)
 - [ ] 댓글 지표 규칙 정의(최근 7일/답변 필요)
 
 ## 8) 서버 액션/기능 연결
 - [x] 글 작성 DB insert 연결
-- [ ] 임시저장(draft) 연결
-- [ ] 출간(published) 연결
-- [ ] 글 수정 연결
+- [x] 임시저장(draft) 연결
+- [x] 출간(published) 연결
+- [x] 글 수정 연결
 - [x] 글 조회(목록/상세) 연결
 - [ ] 카테고리 CRUD 연결
 - [ ] 댓글 작성/조회 연결
@@ -118,8 +120,16 @@ cp .env.example .env.local
 - [ ] `ADMIN_EMAIL_ALLOWLIST`
 
 선택:
-- [ ] `SUPABASE_SECRET_KEY`
+- [x] `SUPABASE_SECRET_KEY` (썸네일 서버 업로드 사용 시 필요)
 - [ ] `ADMIN_GITHUB_ALLOWLIST` (현재 미사용)
+
+## 15) 다음 우선순위
+- [ ] `/posts/[slug]` 공개 상세 페이지 구조 완성(상단 메타/TOC/이전·다음/댓글)
+- [x] `/admin/new` 편집 모드 연결(`/admin/new?slug=...`) + 기존 글 불러오기
+- [x] 제목/slug 수정 시 slug alias 저장(기존 URL fallback)
+- [ ] `categories` 테이블 도입 후 다이얼로그 카테고리 하드코딩 제거
+- [ ] 썸네일 업로드 결과(`thumbnail_url`)를 관리자 상세/목록/공개 페이지에 실제 표시
+- [ ] `not-found.tsx` 커스텀 제작(운영/공개 경로 공통)
 
 ## 13) 개발 커맨드
 ```bash
