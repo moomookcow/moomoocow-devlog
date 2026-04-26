@@ -128,6 +128,10 @@ export default function HomeFeedClient({
     },
   ];
 
+  function prefetchPost(slug: string) {
+    router.prefetch(`/posts/${slug}`);
+  }
+
   return (
     <>
       <section className="space-y-3 overflow-x-hidden">
@@ -196,6 +200,9 @@ export default function HomeFeedClient({
             role="link"
             tabIndex={0}
             onClick={() => router.push(`/posts/${post.slug}`)}
+            onMouseEnter={() => prefetchPost(post.slug)}
+            onFocus={() => prefetchPost(post.slug)}
+            onTouchStart={() => prefetchPost(post.slug)}
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();

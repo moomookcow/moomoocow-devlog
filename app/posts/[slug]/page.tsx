@@ -1,12 +1,12 @@
 import NextImage from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import CommentsThread from "@/components/posts/comments-thread";
 import AutoScrollBottom from "@/components/posts/auto-scroll-bottom";
+import PublicCommentsCard from "@/components/posts/public-comments-card";
 import CategoryPanel from "@/components/shared/category-panel";
 import ScrollProgressBar from "@/components/shared/scroll-progress-bar";
 import ScrollToc from "@/components/shared/scroll-toc";
@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
 import { listActiveCategories } from "@/lib/categories";
-import { listPublishedCommentsByPostId } from "@/lib/comments";
 import { sharedCategoryGroups } from "@/lib/mock-data";
 import { getPublishedPostBySlug, incrementPostView, listPublishedPosts, normalizeSlugInput } from "@/lib/posts";
 import { createPublicClient } from "@/lib/supabase/server";
@@ -163,9 +162,8 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
     // no-op: 조회수 집계 실패가 본문 렌더를 막지 않도록 한다.
   });
 
-  const [publishedPosts, comments, categories] = await Promise.all([
+  const [publishedPosts, categories] = await Promise.all([
     listPublishedPosts(supabase, 200),
-    listPublishedCommentsByPostId(supabase, post.id),
     listActiveCategories(supabase, 200).catch(() => null),
   ]);
 
@@ -324,19 +322,25 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
             </CardContent>
           </Card>
 
-          <Card className="surface-panel rounded-none">
-            <CardHeader>
-              <CardTitle className="korean-display text-2xl">댓글 남기기</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <CommentsThread
-                slug={post.slug}
-                comments={comments}
-                commentError={commentError ?? null}
-                commentSuccess={commentSuccess}
-              />
-            </CardContent>
-          </Card>
+          <Suspense
+            fallback={
+              <Card className="surface-panel rounded-none">
+                <CardHeader>
+                  <CardTitle className="korean-display text-2xl">댓글 남기기</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="h-24 w-full animate-pulse bg-muted/40" />
+                </CardContent>
+              </Card>
+            }
+          >
+            <PublicCommentsCard
+              postId={post.id}
+              slug={post.slug}
+              commentError={commentError ?? null}
+              commentSuccess={commentSuccess}
+            />
+          </Suspense>
         </article>
 
         <aside className="self-start lg:sticky lg:top-4">
