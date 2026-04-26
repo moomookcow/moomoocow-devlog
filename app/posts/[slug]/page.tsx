@@ -5,15 +5,15 @@ import type { ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import CommentsThread from "@/components/posts/comments-thread";
 import CategoryPanel from "@/components/shared/category-panel";
 import ScrollToc from "@/components/shared/scroll-toc";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
 import { listActiveCategories } from "@/lib/categories";
+import { listPublishedCommentsByPostId } from "@/lib/comments";
 import { sharedCategoryGroups } from "@/lib/mock-data";
 import { getPublishedPostBySlug, listPublishedPosts } from "@/lib/posts";
 import { createPublicClient } from "@/lib/supabase/server";
@@ -23,9 +23,19 @@ export const dynamic = "force-dynamic";
 
 type PublicPostPageProps = {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ comment_error?: string; comment_success?: string }>;
 };
 
 const SUPABASE_STORAGE_PUBLIC_PATH = "/storage/v1/object/public/post-thumbnails/";
+const COMMENT_ERROR_MESSAGE: Record<string, string> = {
+  invalid_author_name: "닉네임은 1~40자로 입력해주세요.",
+  invalid_author_email: "이메일 형식이 올바르지 않습니다.",
+  invalid_content: "댓글 내용을 1~2000자로 입력해주세요.",
+  invalid_parent: "답글 대상을 찾을 수 없습니다.",
+  reply_depth_exceeded: "MVP에서는 댓글의 답글(1단계)까지만 허용됩니다.",
+  save_failed: "댓글 저장에 실패했습니다. 잠시 후 다시 시도해주세요.",
+  post_not_found: "게시글을 찾을 수 없습니다.",
+};
 
 function isSupabaseStorageImage(url: string) {
   return url.includes(SUPABASE_STORAGE_PUBLIC_PATH);
@@ -124,14 +134,18 @@ function createHeadingRenderers() {
   };
 }
 
-export default async function PublicPostDetailPage({ params }: PublicPostPageProps) {
+export default async function PublicPostDetailPage({ params, searchParams }: PublicPostPageProps) {
   const supabase = createPublicClient();
   const { slug } = await params;
+  const search = searchParams ? await searchParams : undefined;
+  const commentError = search?.comment_error ? COMMENT_ERROR_MESSAGE[search.comment_error] : null;
+  const commentSuccess = search?.comment_success === "1";
 
   const post = await getPublishedPostBySlug(supabase, slug);
   if (!post) notFound();
 
   const publishedPosts = await listPublishedPosts(supabase, 200);
+  const comments = await listPublishedCommentsByPostId(supabase, post.id);
   let categoryGroups = sharedCategoryGroups;
   try {
     const categories = await listActiveCategories(supabase, 200);
@@ -289,17 +303,12 @@ export default async function PublicPostDetailPage({ params }: PublicPostPagePro
               <CardTitle className="korean-display text-2xl">댓글 남기기</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Input className="h-10 rounded-none" placeholder="닉네임" />
-              <Input className="h-10 rounded-none" placeholder="이메일(선택)" />
-              <Textarea
-                className="korean-display min-h-32 rounded-none"
-                placeholder="댓글 기능은 다음 단계에서 DB와 연결됩니다."
+              <CommentsThread
+                slug={post.slug}
+                comments={comments}
+                commentError={commentError ?? null}
+                commentSuccess={commentSuccess}
               />
-              <div className="flex justify-end">
-                <Button type="button" variant="outline" className="h-9 rounded-none px-4" disabled>
-                  댓글 등록(준비중)
-                </Button>
-              </div>
             </CardContent>
           </Card>
         </article>

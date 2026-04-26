@@ -29,7 +29,7 @@
 - [x] 우측 TOC 제공
 - [x] 카테고리 사이드바 유지
 - [x] 하단 이전/다음 포스트
-- [ ] 댓글 작성 UI/기능
+- [x] 댓글 작성 UI/기능
 - [x] 상세 로딩 스켈레톤(제목/본문/TOC/이전·다음)
 
 ## 3) 관리자 대시보드(`/admin`)
@@ -74,7 +74,7 @@
 - [x] `categories` 테이블
 - [ ] `tags` 테이블
 - [ ] `post_tags` 조인 테이블
-- [ ] `comments` 테이블(MVP)
+- [x] `comments` 테이블(MVP)
 - [ ] `post_views` 집계 테이블
 - [x] slug unique 규칙
 - [x] draft/published 상태 규칙
@@ -89,7 +89,7 @@
 - [x] 글 수정 연결
 - [x] 글 조회(목록/상세) 연결
 - [x] 카테고리 CRUD 연결
-- [ ] 댓글 작성/조회 연결
+- [x] 댓글 작성/조회 연결
 
 ## 9) 라우트 로딩 컴포넌트
 - [x] 홈/피드 로딩
@@ -126,7 +126,7 @@ cp .env.example .env.local
 - [ ] `ADMIN_GITHUB_ALLOWLIST` (현재 미사용)
 
 ## 15) 다음 우선순위
-- [ ] `/posts/[slug]` 공개 상세 페이지 구조 완성(상단 메타/TOC/이전·다음/댓글)
+- [x] `/posts/[slug]` 공개 상세 페이지 구조 완성(상단 메타/TOC/이전·다음/댓글)
 - [x] `/admin/new` 편집 모드 연결(`/admin/new?slug=...`) + 기존 글 불러오기
 - [x] 제목/slug 수정 시 slug alias 저장(기존 URL fallback)
 - [x] `categories` 테이블 도입 후 다이얼로그 카테고리 하드코딩 제거
