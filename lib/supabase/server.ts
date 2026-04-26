@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 import { getSupabaseEnv } from "./env";
@@ -25,3 +26,18 @@ export async function createClient() {
   });
 }
 
+export function createAdminClient() {
+  const { url } = getSupabaseEnv();
+  const secretKey = process.env.SUPABASE_SECRET_KEY;
+
+  if (!secretKey) {
+    return null;
+  }
+
+  return createSupabaseClient(url, secretKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}

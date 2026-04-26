@@ -2,7 +2,9 @@ import type { PostgrestSingleResponse } from "@supabase/supabase-js";
 
 import type { createClient } from "@/lib/supabase/server";
 
-type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+type SupabaseQueryClient = {
+  from: Awaited<ReturnType<typeof createClient>>["from"];
+};
 
 export type PostStatus = "draft" | "published";
 
@@ -76,7 +78,7 @@ export function slugifyTitle(title: string): string {
   return `post-${Date.now()}`;
 }
 
-async function slugExists(supabase: SupabaseServerClient, slug: string): Promise<boolean> {
+async function slugExists(supabase: SupabaseQueryClient, slug: string): Promise<boolean> {
   const { data, error } = (await supabase
     .from("posts")
     .select("slug")
@@ -90,7 +92,7 @@ async function slugExists(supabase: SupabaseServerClient, slug: string): Promise
   return Boolean(data?.slug);
 }
 
-async function makeUniqueSlug(supabase: SupabaseServerClient, baseSlug: string): Promise<string> {
+async function makeUniqueSlug(supabase: SupabaseQueryClient, baseSlug: string): Promise<string> {
   let candidate = baseSlug;
   let index = 2;
 
@@ -102,7 +104,7 @@ async function makeUniqueSlug(supabase: SupabaseServerClient, baseSlug: string):
   return candidate;
 }
 
-export async function listAdminPosts(supabase: SupabaseServerClient, limit = 50): Promise<AdminPost[]> {
+export async function listAdminPosts(supabase: SupabaseQueryClient, limit = 50): Promise<AdminPost[]> {
   const { data, error } = await supabase
     .from("posts")
     .select("id, slug, title, summary, content_mdx, tags, status, created_at, updated_at, published_at")
@@ -117,14 +119,42 @@ export async function listAdminPosts(supabase: SupabaseServerClient, limit = 50)
 }
 
 export async function getPostBySlug(
-  supabase: SupabaseServerClient,
+  supabase: SupabaseQueryClient,
   slug: string,
 ): Promise<AdminPost | null> {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("id, slug, title, summary, content_mdx, tags, status, created_at, updated_at, published_at")
-    .eq("slug", slug)
-    .maybeSingle();
+  const selectFields = "id, slug, title, summary, content_mdx, tags, status, created_at, updated_at, published_at";
+  const candidates = (() => {
+    const values = [slug];
+    try {
+      const decoded = decodeURIComponent(slug);
+      if (decoded && decoded !== slug) values.push(decoded);
+    } catch {
+      // keep original slug only
+    }
+    return values;
+  })();
+
+  let data: PostRow | null = null;
+  let error: { message?: string } | null = null;
+
+  for (const candidate of candidates) {
+    const result = await supabase
+      .from("posts")
+      .select(selectFields)
+      .eq("slug", candidate)
+      .maybeSingle();
+
+    if (result.error) {
+      error = result.error;
+      continue;
+    }
+
+    if (result.data) {
+      data = result.data as PostRow;
+      error = null;
+      break;
+    }
+  }
 
   if (error) {
     throw error;
@@ -135,7 +165,7 @@ export async function getPostBySlug(
 }
 
 export async function createPost(
-  supabase: SupabaseServerClient,
+  supabase: SupabaseQueryClient,
   input: {
     title: string;
     summary: string;
@@ -143,6 +173,9 @@ export async function createPost(
     status: PostStatus;
     tagsRaw: string;
     authorEmail: string | null;
+    visibility?: "public" | "private";
+    category?: string | null;
+    thumbnailUrl?: string | null;
   },
 ): Promise<{ id: string; slug: string }> {
   const now = new Date().toISOString();
@@ -160,19 +193,37 @@ export async function createPost(
     updated_at: now,
     published_at: input.status === "published" ? now : null,
   };
-
-  const { data, error } = await supabase
-    .from("posts")
-    .insert(payload)
-    .select("id, slug")
-    .single();
-
-  if (error) {
-    throw error;
-  }
-
-  return {
-    id: String(data.id),
-    slug: String(data.slug),
+  const payloadWithMeta = {
+    ...payload,
+    category: input.category && input.category !== "none" ? input.category : null,
+    visibility: input.visibility ?? "public",
+    thumbnail_url: input.thumbnailUrl || null,
   };
+
+  const insertWithPayload = async (insertPayload: typeof payload | typeof payloadWithMeta) => {
+    const { data, error } = await supabase
+      .from("posts")
+      .insert(insertPayload)
+      .select("id, slug")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      id: String(data.id),
+      slug: String(data.slug),
+    };
+  };
+
+  try {
+    return await insertWithPayload(payloadWithMeta);
+  } catch (error) {
+    try {
+      return await insertWithPayload(payload);
+    } catch {
+      throw error;
+    }
+  }
 }

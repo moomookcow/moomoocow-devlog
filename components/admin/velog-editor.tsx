@@ -28,6 +28,7 @@ type VelogEditorProps = {
 };
 
 export default function VelogEditor({ action }: VelogEditorProps) {
+  const formId = "admin-post-editor-form";
   const [content, setContent] = useState<string>("# 새 글\n\n");
   const [title, setTitle] = useState<string>("");
   const [tags, setTags] = useState<string[]>([]);
@@ -121,6 +122,7 @@ export default function VelogEditor({ action }: VelogEditorProps) {
 
   return (
     <form
+      id={formId}
       action={action}
       className="flex h-full min-h-0 flex-col overflow-hidden"
       onKeyDown={(event) => {
@@ -389,6 +391,7 @@ export default function VelogEditor({ action }: VelogEditorProps) {
             </DialogClose>
             <Button
               type="submit"
+              form={formId}
               name="status"
               value="published"
               className="korean-display h-12 rounded-none px-6 text-base disabled:pointer-events-auto disabled:cursor-not-allowed"
