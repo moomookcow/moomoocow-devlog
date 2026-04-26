@@ -21,6 +21,10 @@ type RightFeedPanelProps = {
   panelTitle?: string;
   searchPlaceholder?: string;
   searchAriaLabel?: string;
+  searchAction?: string;
+  searchName?: string;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
   sections: FeedSection[];
   className?: string;
 };
@@ -32,10 +36,16 @@ function FeedSectionBlock({ title, items }: FeedSection) {
       <AccordionContent>
         <ul className="space-y-1 pb-1">
           {items.map((item, idx) => (
-            <li key={item.id} className="theme-hover-soft flex items-start gap-2 rounded-[2px] px-1 py-0.5 text-sm">
+            <li
+              key={item.id}
+              className="theme-hover-soft flex items-start gap-2 rounded-[2px] px-1 py-0.5 text-sm"
+            >
               <span className="font-mono text-muted-foreground">{String(idx + 1).padStart(2, "0")}</span>
               {item.href ? (
-                <Link href={item.href} className="korean-display line-clamp-2 cursor-pointer hover:opacity-85">
+                <Link
+                  href={item.href}
+                  className="korean-display line-clamp-2 cursor-pointer no-underline decoration-transparent hover:opacity-85 hover:underline hover:decoration-current hover:underline-offset-2"
+                >
                   {item.label}
                 </Link>
               ) : (
@@ -53,6 +63,10 @@ export default function RightFeedPanel({
   panelTitle = "피드 패널",
   searchPlaceholder = "검색",
   searchAriaLabel = "검색",
+  searchAction = "/",
+  searchName = "q",
+  searchValue = "",
+  onSearchChange,
   sections,
   className,
 }: RightFeedPanelProps) {
@@ -67,9 +81,28 @@ export default function RightFeedPanel({
         <CardTitle className="korean-display text-2xl">{panelTitle}</CardTitle>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-4">
-        <div className="shrink-0">
-          <Input placeholder={searchPlaceholder} aria-label={searchAriaLabel} className="h-9 font-mono text-sm" />
-        </div>
+        {onSearchChange ? (
+          <div className="shrink-0">
+            <Input
+              name={searchName}
+              value={searchValue}
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder={searchPlaceholder}
+              aria-label={searchAriaLabel}
+              className="korean-display h-9 text-sm"
+            />
+          </div>
+        ) : (
+          <form action={searchAction} method="get" className="shrink-0">
+            <Input
+              name={searchName}
+              defaultValue={searchValue}
+              placeholder={searchPlaceholder}
+              aria-label={searchAriaLabel}
+              className="korean-display h-9 text-sm"
+            />
+          </form>
+        )}
         <ScrollArea className="min-h-0 flex-1 pr-2">
           <Accordion multiple className="w-full">
             {sections.map((section) => (

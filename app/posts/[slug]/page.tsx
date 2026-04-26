@@ -16,7 +16,7 @@ import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
 import { listActiveCategories } from "@/lib/categories";
 import { sharedCategoryGroups } from "@/lib/mock-data";
 import { getPublishedPostBySlug, listPublishedPosts } from "@/lib/posts";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -125,7 +125,7 @@ function createHeadingRenderers() {
 }
 
 export default async function PublicPostDetailPage({ params }: PublicPostPageProps) {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { slug } = await params;
 
   const post = await getPublishedPostBySlug(supabase, slug);
