@@ -72,8 +72,8 @@
 ## 7) 데이터 모델(Supabase 직접 사용, Prisma 미사용)
 - [x] `posts` 테이블
 - [x] `categories` 테이블
-- [ ] `tags` 테이블
-- [ ] `post_tags` 조인 테이블
+- [x] `tags` 테이블(SQL/앱 연결 완료, SQL 적용 필요)
+- [x] `post_tags` 조인 테이블(SQL/앱 연결 완료, SQL 적용 필요)
 - [x] `comments` 테이블(MVP)
 - [x] `post_views` 집계 테이블(SQL/앱 연결 완료, SQL 적용 필요)
 - [x] slug unique 규칙

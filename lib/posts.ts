@@ -121,6 +121,91 @@ function isMissingAliasTableError(error: unknown): boolean {
   return code === "PGRST205" || code === "42P01";
 }
 
+function isMissingTagTablesError(error: unknown): boolean {
+  const code = (error as { code?: string })?.code;
+  return code === "PGRST205" || code === "42P01";
+}
+
+function normalizeTagSlug(tag: string): string {
+  return normalizeSlugInput(tag);
+}
+
+async function syncPostTagRelations(
+  supabase: SupabaseQueryClient,
+  postId: string,
+  tags: string[],
+): Promise<void> {
+  const unique = new Set<string>();
+  const normalized = tags
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .filter((tag) => {
+      const key = tag.toLowerCase();
+      if (unique.has(key)) return false;
+      unique.add(key);
+      return true;
+    })
+    .map((name) => ({ name, slug: normalizeTagSlug(name) }))
+    .filter((item) => item.slug.length > 0);
+
+  const clearExistingRelations = async () => {
+    const clearResult = await supabase.from("post_tags").delete().eq("post_id", postId);
+    if (clearResult.error && !isMissingTagTablesError(clearResult.error)) {
+      throw clearResult.error;
+    }
+  };
+
+  if (normalized.length === 0) {
+    await clearExistingRelations();
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const upsertTagsResult = await supabase.from("tags").upsert(
+    normalized.map((item) => ({
+      slug: item.slug,
+      name: item.name,
+      updated_at: now,
+    })),
+    { onConflict: "slug" },
+  );
+  if (upsertTagsResult.error) {
+    if (isMissingTagTablesError(upsertTagsResult.error)) return;
+    throw upsertTagsResult.error;
+  }
+
+  const fetchTagsResult = await supabase
+    .from("tags")
+    .select("id, slug")
+    .in(
+      "slug",
+      normalized.map((item) => item.slug),
+    );
+
+  if (fetchTagsResult.error) {
+    if (isMissingTagTablesError(fetchTagsResult.error)) return;
+    throw fetchTagsResult.error;
+  }
+
+  const tagIds = (fetchTagsResult.data ?? [])
+    .map((row) => String((row as { id: string }).id))
+    .filter(Boolean);
+
+  await clearExistingRelations();
+  if (tagIds.length === 0) return;
+
+  const insertRelationsResult = await supabase.from("post_tags").insert(
+    tagIds.map((tagId) => ({
+      post_id: postId,
+      tag_id: tagId,
+    })),
+  );
+
+  if (insertRelationsResult.error && !isMissingTagTablesError(insertRelationsResult.error)) {
+    throw insertRelationsResult.error;
+  }
+}
+
 async function aliasExists(supabase: SupabaseQueryClient, oldSlug: string): Promise<boolean> {
   const result = await supabase
     .from("post_slug_aliases")
@@ -359,6 +444,7 @@ export async function createPost(
   const preferred = normalizeSlugInput(input.preferredSlug ?? "");
   const baseSlug = preferred || slugifyTitle(input.title);
   const slug = await makeUniqueSlugConsideringAliases(supabase, baseSlug);
+  const normalizedTags = normalizeTags(input.tagsRaw);
 
   const payload = {
     slug,
@@ -366,7 +452,7 @@ export async function createPost(
     summary: input.summary || null,
     content_mdx: input.contentMdx,
     status: input.status,
-    tags: normalizeTags(input.tagsRaw),
+    tags: normalizedTags,
     author_email: input.authorEmail,
     updated_at: now,
     published_at: input.status === "published" ? now : null,
@@ -395,15 +481,19 @@ export async function createPost(
     };
   };
 
+  let created: { id: string; slug: string };
   try {
-    return await insertWithPayload(payloadWithMeta);
+    created = await insertWithPayload(payloadWithMeta);
   } catch (error) {
     try {
-      return await insertWithPayload(payload);
+      created = await insertWithPayload(payload);
     } catch {
       throw error;
     }
   }
+
+  await syncPostTagRelations(supabase, created.id, normalizedTags);
+  return created;
 }
 
 export async function updatePostBySlug(
@@ -451,6 +541,7 @@ export async function updatePostBySlug(
 
   const preferred = normalizeSlugInput(input.preferredSlug ?? "");
   const desiredBaseSlug = preferred || currentPost.slug;
+  const normalizedTags = normalizeTags(input.tagsRaw);
   const finalSlug =
     desiredBaseSlug === currentPost.slug
       ? currentPost.slug
@@ -462,7 +553,7 @@ export async function updatePostBySlug(
     summary: input.summary || null,
     content_mdx: input.contentMdx,
     status: input.status,
-    tags: normalizeTags(input.tagsRaw),
+    tags: normalizedTags,
     updated_at: now,
     published_at: input.status === "published" ? now : null,
   };
@@ -517,6 +608,8 @@ export async function updatePostBySlug(
       throw aliasResult.error;
     }
   }
+
+  await syncPostTagRelations(supabase, updated.id, normalizedTags);
 
   return updated;
 }

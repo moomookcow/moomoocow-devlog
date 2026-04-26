@@ -16,7 +16,7 @@ import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
 import { listActiveCategories } from "@/lib/categories";
 import { listPublishedCommentsByPostId } from "@/lib/comments";
 import { sharedCategoryGroups } from "@/lib/mock-data";
-import { getPublishedPostBySlug, incrementPostView, listPublishedPosts } from "@/lib/posts";
+import { getPublishedPostBySlug, incrementPostView, listPublishedPosts, normalizeSlugInput } from "@/lib/posts";
 import { createPublicClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
@@ -197,9 +197,14 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
               <p className="korean-display text-lg text-foreground/85">{post.summary || "소개글이 없습니다."}</p>
               <div className="flex flex-wrap gap-2">
                 {(post.tags ?? []).map((tag) => (
-                  <Badge key={tag} variant="outline" className="rounded-sm px-2.5 py-1 text-sm">
-                    {tag}
-                  </Badge>
+                  <Link key={tag} href={`/tags/${encodeURIComponent(normalizeSlugInput(tag) || tag)}`}>
+                    <Badge
+                      variant="outline"
+                      className="rounded-sm px-2.5 py-1 text-sm transition-opacity hover:opacity-80"
+                    >
+                      {tag}
+                    </Badge>
+                  </Link>
                 ))}
               </div>
               <div className="flex flex-wrap items-center gap-2">
