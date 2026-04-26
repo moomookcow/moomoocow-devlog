@@ -98,6 +98,7 @@ export default async function AdminPage() {
             slug: post.slug,
             title: post.title,
             summary: post.summary,
+            tags: post.tags ?? [],
             status: post.status,
             updatedAt: post.updatedAt,
             thumbnailUrl: post.thumbnailUrl,

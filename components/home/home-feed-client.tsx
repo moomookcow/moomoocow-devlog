@@ -2,6 +2,7 @@
 
 import NextImage from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 
@@ -25,39 +26,78 @@ type HomeFeedClientProps = {
   popularFeedItems: Array<{ id: string; label: string; href: string }>;
   recentCommentFeedItems: Array<{ id: string; label: string; href: string }>;
   initialQuery?: string;
-  initialCategorySlug?: string;
-  initialCategoryName?: string;
+  initialTagSlug?: string;
+  initialTagName?: string;
 };
+
+function slugifyTagForHref(tag: string) {
+  return tag
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\uac00-\ud7a3\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function formatTagLabel(tag: string) {
+  const trimmed = tag.trim();
+  if (!trimmed) return "";
+  const withSpaces = trimmed.replace(/[-_]+/g, " ");
+  if (!/[a-zA-Z]/.test(withSpaces)) {
+    return withSpaces;
+  }
+  return withSpaces.replace(/\b[a-z]/g, (char) => char.toUpperCase());
+}
 
 export default function HomeFeedClient({
   posts,
   popularFeedItems,
   recentCommentFeedItems,
   initialQuery = "",
-  initialCategorySlug = "",
-  initialCategoryName = "",
+  initialTagSlug = "",
+  initialTagName = "",
 }: HomeFeedClientProps) {
+  const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
-  const [selectedCategorySlug, setSelectedCategorySlug] = useState(initialCategorySlug);
-  const [activeCategoryName, setActiveCategoryName] = useState(initialCategoryName);
+  const [selectedTagSlug, setSelectedTagSlug] = useState(initialTagSlug);
+  const [activeTagName, setActiveTagName] = useState(initialTagName);
 
   const lowerQuery = query.trim().toLowerCase();
 
-  const categories = useMemo(() => {
-    return posts
-      .map((post) => post.category)
-      .filter((value, idx, arr) => arr.indexOf(value) === idx);
+  const tagOptions = useMemo(() => {
+    const tagMap = new Map<string, { slug: string; label: string; count: number }>();
+    posts.forEach((post) => {
+      (post.tags ?? []).forEach((tag) => {
+        const slug = slugifyTagForHref(tag);
+        const label = formatTagLabel(tag);
+        if (!slug || !label) return;
+        const current = tagMap.get(slug);
+        if (!current) {
+          tagMap.set(slug, { slug, label, count: 1 });
+          return;
+        }
+        current.count += 1;
+      });
+    });
+
+    return Array.from(tagMap.values()).sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      return a.label.localeCompare(b.label);
+    });
   }, [posts]);
 
   const visiblePosts = useMemo(() => {
     return posts.filter((post) => {
-      const categoryMatched = selectedCategorySlug ? post.category === selectedCategorySlug : true;
+      const tagMatched = selectedTagSlug
+        ? (post.tags ?? []).some((tag) => slugifyTagForHref(tag) === selectedTagSlug)
+        : true;
       const queryMatched = lowerQuery
         ? [post.title, post.summary, post.category, post.tags.join(" ")].join(" ").toLowerCase().includes(lowerQuery)
         : true;
-      return categoryMatched && queryMatched;
+      return tagMatched && queryMatched;
     });
-  }, [lowerQuery, posts, selectedCategorySlug]);
+  }, [lowerQuery, posts, selectedTagSlug]);
 
   const recentItems = useMemo(
     () =>
@@ -94,38 +134,43 @@ export default function HomeFeedClient({
           <button
             type="button"
             onClick={() => {
-              setSelectedCategorySlug("");
-              setActiveCategoryName("");
+              setSelectedTagSlug("");
+              setActiveTagName("");
             }}
             className={cn(
               "korean-display inline-flex cursor-pointer items-center rounded-none border px-2 py-1 text-sm hover:opacity-85",
-              !selectedCategorySlug ? "border-primary bg-primary text-primary-foreground" : "border-border/60",
+              !selectedTagSlug ? "border-primary bg-primary text-primary-foreground" : "border-border/60",
             )}
           >
             전체
           </button>
-          {categories.map((category) => (
+          {tagOptions.map((tag) => (
             <button
-              key={category}
+              key={tag.slug}
               type="button"
               onClick={() => {
-                setSelectedCategorySlug(category);
-                setActiveCategoryName(category);
+                setSelectedTagSlug(tag.slug);
+                setActiveTagName(tag.label);
               }}
               className={cn(
                 "korean-display inline-flex cursor-pointer items-center rounded-none border px-2 py-1 text-sm hover:opacity-85",
-                selectedCategorySlug === category ? "border-primary bg-primary text-primary-foreground" : "border-border/60",
+                selectedTagSlug === tag.slug ? "border-primary bg-primary text-primary-foreground" : "border-border/60",
               )}
             >
-              {category}
+              #{tag.label}
             </button>
           ))}
-          {selectedCategorySlug || lowerQuery ? (
+          {tagOptions.length === 0 ? (
+            <span className="korean-display inline-flex items-center rounded-none border border-border/60 px-2 py-1 text-sm text-muted-foreground">
+              태그 없음
+            </span>
+          ) : null}
+          {selectedTagSlug || lowerQuery ? (
             <button
               type="button"
               onClick={() => {
-                setSelectedCategorySlug("");
-                setActiveCategoryName("");
+                setSelectedTagSlug("");
+                setActiveTagName("");
                 setQuery("");
               }}
               className="ml-auto inline-flex cursor-pointer items-center gap-1 border border-border/60 px-2 py-1 text-xs hover:opacity-85"
@@ -136,16 +181,28 @@ export default function HomeFeedClient({
           ) : null}
         </div>
 
-        {selectedCategorySlug || lowerQuery ? (
+        {selectedTagSlug || lowerQuery ? (
           <div className="surface-subtle px-3 py-2">
             <p className="korean-display text-sm text-muted-foreground">
-              필터: {activeCategoryName || selectedCategorySlug || "전체"} {query.trim() ? `· 검색어 "${query.trim()}"` : ""}
+              필터: {activeTagName || selectedTagSlug || "전체"} {query.trim() ? `· 검색어 "${query.trim()}"` : ""}
             </p>
           </div>
         ) : null}
 
         {visiblePosts.map((post) => (
-          <Link key={post.slug} href={`/posts/${post.slug}`} className="group/card block">
+          <article
+            key={post.slug}
+            role="link"
+            tabIndex={0}
+            onClick={() => router.push(`/posts/${post.slug}`)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                router.push(`/posts/${post.slug}`);
+              }
+            }}
+            className="group/card block cursor-pointer"
+          >
             <Card className="theme-hover-soft surface-panel rounded-none cursor-pointer">
               {post.thumbnailUrl ? (
                 <div className="border-b border-border/60">
@@ -161,10 +218,30 @@ export default function HomeFeedClient({
               ) : null}
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between gap-2">
-                  <Badge variant="outline" className="korean-display rounded-sm px-2 py-2 text-sm">
-                    {post.category}
-                  </Badge>
-                  <span className="font-mono text-xs text-muted-foreground">{post.date}</span>
+                  <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                    {(post.tags ?? []).slice(0, 3).map((tag) => {
+                      const hrefSlug = slugifyTagForHref(tag);
+                      const label = formatTagLabel(tag);
+                      if (!hrefSlug || !label) return null;
+                      return (
+                        <Link
+                          key={`${post.slug}-header-${tag}`}
+                          href={`/tags/${encodeURIComponent(hrefSlug)}`}
+                          className="inline-flex items-center rounded-sm border border-border/70 bg-muted/70 px-2 py-0.5 font-mono text-xs text-foreground transition-opacity hover:opacity-80"
+                          onClick={(event) => event.stopPropagation()}
+                          onKeyDown={(event) => event.stopPropagation()}
+                        >
+                          #{label}
+                        </Link>
+                      );
+                    })}
+                    {post.tags.length === 0 ? (
+                      <span className="inline-flex items-center rounded-sm border border-border/70 bg-muted/70 px-2 py-0.5 font-mono text-xs text-muted-foreground">
+                        #태그없음
+                      </span>
+                    ) : null}
+                  </div>
+                  <span className="shrink-0 font-mono text-xs text-muted-foreground">{post.date}</span>
                 </div>
                 <CardTitle className="korean-display text-2xl transition-opacity duration-150 group-hover/card:opacity-80">{post.title}</CardTitle>
               </CardHeader>
@@ -172,7 +249,7 @@ export default function HomeFeedClient({
                 <p className="font-mono text-sm text-muted-foreground">{post.summary}</p>
               </CardContent>
             </Card>
-          </Link>
+          </article>
         ))}
         {visiblePosts.length === 0 ? (
           <Card className="surface-panel rounded-none">

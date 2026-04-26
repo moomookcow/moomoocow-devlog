@@ -6,7 +6,7 @@ import { listRecentPublishedComments } from "@/lib/comments";
 import { listPublishedPosts, listTopPostViews } from "@/lib/posts";
 import { createPublicClient } from "@/lib/supabase/server";
 type HomePageProps = {
-  searchParams?: Promise<{ q?: string; category?: string }>;
+  searchParams?: Promise<{ q?: string; tag?: string }>;
 };
 
 export const dynamic = "force-dynamic";
@@ -25,12 +25,12 @@ function formatDate(value: string | null) {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const params = searchParams ? await searchParams : undefined;
   const queryRaw = (params?.q ?? "").trim();
-  const selectedCategorySlug = (params?.category ?? "").trim();
+  const selectedTagSlug = (params?.tag ?? "").trim();
 
   const supabase = createPublicClient();
   let publishedPosts = [] as Awaited<ReturnType<typeof listPublishedPosts>>;
   let categoryGroups = [] as ReturnType<typeof buildCategoryPanelGroups>;
-  let activeCategoryName = "";
+  const activeTagName = "";
   let recentCommentFeedItems = [] as Array<{ id: string; label: string; href: string }>;
   let popularFeedItems = [] as Array<{ id: string; label: string; href: string }>;
 
@@ -41,10 +41,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   }
   try {
     const categories = await listActiveCategories(supabase, 200);
-    if (selectedCategorySlug) {
-      const found = categories.find((item) => item.slug === selectedCategorySlug);
-      activeCategoryName = found?.name ?? "";
-    }
     const groups = buildCategoryPanelGroups(categories, publishedPosts, { hrefBase: "/posts" });
     categoryGroups = groups;
   } catch {
@@ -117,8 +113,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           popularFeedItems={popularFeedItems}
           recentCommentFeedItems={recentCommentFeedItems}
           initialQuery={queryRaw}
-          initialCategorySlug={selectedCategorySlug}
-          initialCategoryName={activeCategoryName}
+          initialTagSlug={selectedTagSlug}
+          initialTagName={activeTagName}
         />
       </div>
     </div>

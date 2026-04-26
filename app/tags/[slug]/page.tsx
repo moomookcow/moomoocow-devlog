@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 type TagPageProps = {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ q?: string; category?: string }>;
+  searchParams?: Promise<{ q?: string; tag?: string }>;
 };
 
 function formatDate(value: string | null) {
@@ -34,7 +34,7 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
   const { slug } = await params;
   const rawParams = searchParams ? await searchParams : undefined;
   const queryRaw = (rawParams?.q ?? "").trim();
-  const selectedCategorySlug = (rawParams?.category ?? "").trim();
+  const selectedTagSlug = (rawParams?.tag ?? "").trim();
 
   const supabase = createPublicClient();
   const taggedPosts = await listPublishedPostsByTagSlug(supabase, slug, 200);
@@ -89,11 +89,6 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
     tags: post.tags ?? [],
   }));
 
-  const selectedCategoryName =
-    selectedCategorySlug && categories.length > 0
-      ? categories.find((category) => category.slug === selectedCategorySlug)?.name ?? ""
-      : "";
-
   return (
     <div className="mx-auto w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
       <section className="surface-panel mb-4 px-5 py-8 sm:px-8 sm:py-10">
@@ -124,8 +119,8 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
           popularFeedItems={popularFeedItems}
           recentCommentFeedItems={recentCommentFeedItems}
           initialQuery={queryRaw}
-          initialCategorySlug={selectedCategorySlug}
-          initialCategoryName={selectedCategoryName}
+          initialTagSlug={selectedTagSlug}
+          initialTagName={tagLabel}
         />
       </div>
     </div>

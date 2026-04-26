@@ -15,6 +15,7 @@ type AdminPostCard = {
   slug: string;
   title: string;
   summary: string | null;
+  tags: string[];
   status: "draft" | "published";
   updatedAt: string | null;
   thumbnailUrl: string | null;
@@ -242,7 +243,20 @@ export default function AdminDashboardClient({
                           <Link href={`/admin/posts/${encodeURIComponent(post.slug)}`} className="korean-display block truncate text-xl hover:opacity-85">
                             {post.title}
                           </Link>
-                          <p className="truncate font-mono text-xs text-muted-foreground">/{post.slug}</p>
+                          {post.tags.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {post.tags.slice(0, 3).map((tag) => (
+                                <Badge key={`${post.id}-${tag}`} variant="outline" className="rounded-sm px-2 py-0.5 text-xs">
+                                  #{tag}
+                                </Badge>
+                              ))}
+                              {post.tags.length > 3 ? (
+                                <span className="font-mono text-xs text-muted-foreground">+{post.tags.length - 3}</span>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <p className="truncate font-mono text-xs text-muted-foreground">태그 없음</p>
+                          )}
                         </div>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
