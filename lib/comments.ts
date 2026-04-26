@@ -22,6 +22,21 @@ export type CommentNode = Comment & {
   replies: CommentNode[];
 };
 
+export type RecentComment = {
+  id: string;
+  postId: string;
+  parentId: string | null;
+  authorName: string;
+  content: string;
+  createdAt: string | null;
+};
+
+export type CommentStats = {
+  total: number;
+  recent7d: number;
+  pendingReply: number;
+};
+
 type CommentRow = {
   id: string;
   post_id: string;
@@ -137,3 +152,85 @@ export async function createComment(
   return mapComment(data as CommentRow);
 }
 
+export async function listRecentPublishedComments(
+  supabase: SupabaseQueryClient,
+  limit = 12,
+): Promise<RecentComment[]> {
+  const { data, error } = await supabase
+    .from("comments")
+    .select("id, post_id, parent_id, author_name, content, created_at")
+    .eq("status", "published")
+    .order("created_at", { ascending: false, nullsFirst: false })
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((row) => {
+    const current = row as {
+      id: string;
+      post_id: string;
+      parent_id: string | null;
+      author_name: string;
+      content: string;
+      created_at: string | null;
+    };
+    return {
+      id: current.id,
+      postId: current.post_id,
+      parentId: current.parent_id,
+      authorName: current.author_name,
+      content: current.content,
+      createdAt: current.created_at,
+    };
+  });
+}
+
+export async function getPublishedCommentStats(
+  supabase: SupabaseQueryClient,
+): Promise<CommentStats> {
+  const { data, error } = await supabase
+    .from("comments")
+    .select("id, parent_id, created_at")
+    .eq("status", "published");
+
+  if (error) {
+    throw error;
+  }
+
+  const rows = (data ?? []) as Array<{
+    id: string;
+    parent_id: string | null;
+    created_at: string | null;
+  }>;
+
+  const now = Date.now();
+  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const repliedRootIds = new Set<string>();
+
+  let recent7d = 0;
+  rows.forEach((row) => {
+    if (row.parent_id) {
+      repliedRootIds.add(row.parent_id);
+    }
+    if (row.created_at) {
+      const ts = new Date(row.created_at).getTime();
+      if (!Number.isNaN(ts) && ts >= sevenDaysAgo) {
+        recent7d += 1;
+      }
+    }
+  });
+
+  const pendingReply = rows.reduce((acc, row) => {
+    if (row.parent_id) return acc;
+    if (repliedRootIds.has(row.id)) return acc;
+    return acc + 1;
+  }, 0);
+
+  return {
+    total: rows.length,
+    recent7d,
+    pendingReply,
+  };
+}

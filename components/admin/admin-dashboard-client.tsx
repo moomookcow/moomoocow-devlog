@@ -23,6 +23,12 @@ type AdminPostCard = {
 type AdminDashboardClientProps = {
   posts: AdminPostCard[];
   postsError: boolean;
+  recentCommentFeedItems: Array<{ id: string; label: string; href: string }>;
+  commentStats: {
+    total: number;
+    recent7d: number;
+    pendingReply: number;
+  };
 };
 
 function formatDate(value: string | null): string {
@@ -36,7 +42,12 @@ function formatDate(value: string | null): string {
   });
 }
 
-export default function AdminDashboardClient({ posts, postsError }: AdminDashboardClientProps) {
+export default function AdminDashboardClient({
+  posts,
+  postsError,
+  recentCommentFeedItems,
+  commentStats,
+}: AdminDashboardClientProps) {
   const [query, setQuery] = useState("");
 
   const filteredPosts = useMemo(() => {
@@ -56,12 +67,6 @@ export default function AdminDashboardClient({ posts, postsError }: AdminDashboa
       slug: post.slug,
       views: "-",
     }));
-  const commentStats = {
-    total: 0,
-    recent7d: 0,
-    pendingReply: 0,
-  };
-
   const popularFeedItems = posts
     .filter((post) => post.status === "published")
     .slice(0, 12)
@@ -92,12 +97,10 @@ export default function AdminDashboardClient({ posts, postsError }: AdminDashboa
     },
     {
       title: "최근 댓글",
-      items: [
-        {
-          id: "comment-pending",
-          label: "댓글 시스템 연결 전입니다. 다음 단계에서 실데이터가 표시됩니다.",
-        },
-      ],
+      items:
+        recentCommentFeedItems.length > 0
+          ? recentCommentFeedItems
+          : [{ id: "comment-empty", label: "아직 댓글이 없습니다." }],
     },
   ];
 

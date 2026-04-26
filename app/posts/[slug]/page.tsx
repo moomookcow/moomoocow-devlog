@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import CommentsThread from "@/components/posts/comments-thread";
+import AutoScrollBottom from "@/components/posts/auto-scroll-bottom";
 import CategoryPanel from "@/components/shared/category-panel";
 import ScrollToc from "@/components/shared/scroll-toc";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,7 @@ export const dynamic = "force-dynamic";
 
 type PublicPostPageProps = {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ comment_error?: string; comment_success?: string }>;
+  searchParams?: Promise<{ comment_error?: string; comment_success?: string; jump?: string }>;
 };
 
 const SUPABASE_STORAGE_PUBLIC_PATH = "/storage/v1/object/public/post-thumbnails/";
@@ -140,6 +141,7 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
   const search = searchParams ? await searchParams : undefined;
   const commentError = search?.comment_error ? COMMENT_ERROR_MESSAGE[search.comment_error] : null;
   const commentSuccess = search?.comment_success === "1";
+  const shouldJumpToBottom = search?.jump === "bottom";
 
   const post = await getPublishedPostBySlug(supabase, slug);
   if (!post) notFound();
@@ -170,6 +172,7 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
 
   return (
     <main className="mx-auto w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
+      <AutoScrollBottom enabled={shouldJumpToBottom} />
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
         <aside className="self-start space-y-4">
           <CategoryPanel groups={categoryGroups} />
@@ -321,6 +324,7 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
           </Card>
         </aside>
       </div>
+      <div id="page-bottom" className="h-px w-full" aria-hidden="true" />
     </main>
   );
 }

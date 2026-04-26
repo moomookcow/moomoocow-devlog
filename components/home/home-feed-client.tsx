@@ -22,6 +22,7 @@ type HomePostCard = {
 
 type HomeFeedClientProps = {
   posts: HomePostCard[];
+  recentCommentFeedItems: Array<{ id: string; label: string; href: string }>;
   initialQuery?: string;
   initialCategorySlug?: string;
   initialCategoryName?: string;
@@ -29,6 +30,7 @@ type HomeFeedClientProps = {
 
 export default function HomeFeedClient({
   posts,
+  recentCommentFeedItems,
   initialQuery = "",
   initialCategorySlug = "",
   initialCategoryName = "",
@@ -80,10 +82,10 @@ export default function HomeFeedClient({
     { title: "최근 글", items: recentItems },
     {
       title: "최근 댓글",
-      items: [
-        { id: "comments-todo-1", label: "댓글 기능 연결 후 최근 댓글이 자동 표시됩니다." },
-        { id: "comments-todo-2", label: "다음 단계: comments 테이블 + 작성/조회 연결" },
-      ],
+      items:
+        recentCommentFeedItems.length > 0
+          ? recentCommentFeedItems
+          : [{ id: "comments-empty", label: "아직 댓글이 없습니다." }],
     },
   ];
 

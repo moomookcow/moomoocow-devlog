@@ -104,7 +104,7 @@ export default function RightFeedPanel({
           </form>
         )}
         <ScrollArea className="min-h-0 flex-1 pr-2">
-          <Accordion multiple className="w-full">
+          <Accordion multiple defaultValue={sections.map((section) => section.title)} className="w-full">
             {sections.map((section) => (
               <FeedSectionBlock key={section.title} title={section.title} items={section.items} />
             ))}

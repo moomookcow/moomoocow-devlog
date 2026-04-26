@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { createPostCommentAction } from "@/app/posts/[slug]/actions";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,32 @@ export default function CommentsThread({
   commentSuccess,
 }: CommentsThreadProps) {
   const [activeReplyCommentId, setActiveReplyCommentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const forceScrollToPageBottom = () => {
+      const scrollElement = document.scrollingElement ?? document.documentElement;
+      const top = Math.max(
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight,
+        scrollElement.scrollHeight,
+      );
+      scrollElement.scrollTop = top;
+      window.scrollTo({ top, behavior: "auto" });
+    };
+
+    const scrollToCommentsEnd = () => {
+      if (window.location.hash !== "#comments-end") return;
+      requestAnimationFrame(forceScrollToPageBottom);
+      window.setTimeout(forceScrollToPageBottom, 120);
+      window.setTimeout(forceScrollToPageBottom, 360);
+    };
+
+    scrollToCommentsEnd();
+    window.addEventListener("hashchange", scrollToCommentsEnd);
+    return () => {
+      window.removeEventListener("hashchange", scrollToCommentsEnd);
+    };
+  }, []);
 
   return (
     <div id="comments" className="space-y-3">
@@ -134,6 +160,7 @@ export default function CommentsThread({
           </ul>
         )}
       </div>
+      <div id="comments-end" className="h-px w-full" aria-hidden="true" />
     </div>
   );
 }

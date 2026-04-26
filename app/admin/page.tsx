@@ -3,6 +3,7 @@ import CategoryPanel from "@/components/shared/category-panel";
 import { requireAdminOrRedirect } from "@/lib/admin-auth";
 import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
 import { listActiveCategories } from "@/lib/categories";
+import { getPublishedCommentStats, listRecentPublishedComments } from "@/lib/comments";
 import { sharedCategoryGroups } from "@/lib/mock-data";
 import { listAdminPosts } from "@/lib/posts";
 import { createClient } from "@/lib/supabase/server";
@@ -16,6 +17,12 @@ export default async function AdminPage() {
   let postsError = false;
   let posts = [] as Awaited<ReturnType<typeof listAdminPosts>>;
   let categoryGroups = sharedCategoryGroups;
+  let recentComments = [] as Awaited<ReturnType<typeof listRecentPublishedComments>>;
+  let commentStats = {
+    total: 0,
+    recent7d: 0,
+    pendingReply: 0,
+  };
 
   try {
     posts = await listAdminPosts(supabase, 50);
@@ -31,6 +38,28 @@ export default async function AdminPage() {
   } catch {
     categoryGroups = sharedCategoryGroups;
   }
+  try {
+    recentComments = await listRecentPublishedComments(supabase, 16);
+    commentStats = await getPublishedCommentStats(supabase);
+  } catch {
+    recentComments = [];
+    commentStats = { total: 0, recent7d: 0, pendingReply: 0 };
+  }
+
+  const postById = new Map(posts.map((post) => [post.id, post]));
+  const recentCommentFeedItems = recentComments
+    .map((comment) => {
+      const post = postById.get(comment.postId);
+      if (!post) return null;
+      const preview = comment.content.trim().replace(/\s+/g, " ");
+      const short = preview.length > 48 ? `${preview.slice(0, 48)}…` : preview;
+      return {
+        id: `recent-comment-${comment.id}`,
+        label: `${comment.authorName}: ${short}`,
+        href: `/posts/${encodeURIComponent(post.slug)}?jump=bottom#page-bottom`,
+      };
+    })
+    .filter((item): item is { id: string; label: string; href: string } => item !== null);
 
   return (
     <main className="mx-auto w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
@@ -54,6 +83,8 @@ export default async function AdminPage() {
             thumbnailUrl: post.thumbnailUrl,
           }))}
           postsError={postsError}
+          recentCommentFeedItems={recentCommentFeedItems}
+          commentStats={commentStats}
         />
       </div>
     </main>

@@ -2,6 +2,7 @@ import HomeFeedClient from "@/components/home/home-feed-client";
 import CategoryPanel from "@/components/shared/category-panel";
 import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
 import { listActiveCategories } from "@/lib/categories";
+import { listRecentPublishedComments } from "@/lib/comments";
 import { listPublishedPosts } from "@/lib/posts";
 import { createPublicClient } from "@/lib/supabase/server";
 type HomePageProps = {
@@ -30,6 +31,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   let publishedPosts = [] as Awaited<ReturnType<typeof listPublishedPosts>>;
   let categoryGroups = [] as ReturnType<typeof buildCategoryPanelGroups>;
   let activeCategoryName = "";
+  let recentCommentFeedItems = [] as Array<{ id: string; label: string; href: string }>;
 
   try {
     publishedPosts = await listPublishedPosts(supabase, 200);
@@ -46,6 +48,25 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     categoryGroups = groups;
   } catch {
     categoryGroups = [];
+  }
+  try {
+    const recentComments = await listRecentPublishedComments(supabase, 16);
+    const postById = new Map(publishedPosts.map((post) => [post.id, post]));
+    recentCommentFeedItems = recentComments
+      .map((comment) => {
+        const post = postById.get(comment.postId);
+        if (!post) return null;
+        const preview = comment.content.trim().replace(/\s+/g, " ");
+        const short = preview.length > 48 ? `${preview.slice(0, 48)}…` : preview;
+        return {
+          id: `recent-comment-${comment.id}`,
+          label: `${comment.authorName}: ${short}`,
+          href: `/posts/${encodeURIComponent(post.slug)}?jump=bottom#page-bottom`,
+        };
+      })
+      .filter((item): item is { id: string; label: string; href: string } => item !== null);
+  } catch {
+    recentCommentFeedItems = [];
   }
 
   const allVisiblePosts = publishedPosts.map((post) => ({
@@ -75,6 +96,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </aside>
         <HomeFeedClient
           posts={allVisiblePosts}
+          recentCommentFeedItems={recentCommentFeedItems}
           initialQuery={queryRaw}
           initialCategorySlug={selectedCategorySlug}
           initialCategoryName={activeCategoryName}
