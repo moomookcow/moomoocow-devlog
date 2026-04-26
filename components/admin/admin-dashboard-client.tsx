@@ -183,7 +183,7 @@ export default function AdminDashboardClient({
           <Card className="surface-panel rounded-none">
             <CardHeader>
               <CardTitle className="korean-display text-2xl">댓글 인사이트</CardTitle>
-              <CardDescription>댓글 시스템 연결 후 실제 수치가 자동 반영됩니다.</CardDescription>
+              <CardDescription>답변 필요: 작성 후 24시간 경과 + 답글 없는 원댓글</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-1">
               <div className="surface-subtle rounded-none p-3">

@@ -80,7 +80,7 @@
 - [x] draft/published 상태 규칙
 - [x] `post-thumbnails` Storage 버킷/정책 SQL 마련
 - [x] slug alias 테이블/정책 SQL 마련 (`post_slug_aliases`)
-- [ ] 댓글 지표 규칙 정의(최근 7일/답변 필요)
+- [x] 댓글 지표 규칙 정의(최근 7일/답변 필요: 24시간 경과 + 미답글 원댓글)
 
 ## 8) 서버 액션/기능 연결
 - [x] 글 작성 DB insert 연결

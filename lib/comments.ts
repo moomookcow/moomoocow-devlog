@@ -37,6 +37,9 @@ export type CommentStats = {
   pendingReply: number;
 };
 
+const RECENT_DAYS = 7;
+const PENDING_REPLY_AFTER_HOURS = 24;
+
 type CommentRow = {
   id: string;
   post_id: string;
@@ -206,25 +209,30 @@ export async function getPublishedCommentStats(
   }>;
 
   const now = Date.now();
-  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const recentWindowStart = now - RECENT_DAYS * 24 * 60 * 60 * 1000;
+  const pendingReplyThreshold = now - PENDING_REPLY_AFTER_HOURS * 60 * 60 * 1000;
   const repliedRootIds = new Set<string>();
+  const createdAtById = new Map<string, number | null>();
 
   let recent7d = 0;
   rows.forEach((row) => {
+    const ts = row.created_at ? new Date(row.created_at).getTime() : Number.NaN;
+    createdAtById.set(row.id, Number.isNaN(ts) ? null : ts);
+
     if (row.parent_id) {
       repliedRootIds.add(row.parent_id);
     }
-    if (row.created_at) {
-      const ts = new Date(row.created_at).getTime();
-      if (!Number.isNaN(ts) && ts >= sevenDaysAgo) {
-        recent7d += 1;
-      }
+    if (!Number.isNaN(ts) && ts >= recentWindowStart) {
+      recent7d += 1;
     }
-  });
+  }); 
 
   const pendingReply = rows.reduce((acc, row) => {
     if (row.parent_id) return acc;
     if (repliedRootIds.has(row.id)) return acc;
+    const createdAt = createdAtById.get(row.id);
+    if (!createdAt) return acc;
+    if (createdAt > pendingReplyThreshold) return acc;
     return acc + 1;
   }, 0);
 
