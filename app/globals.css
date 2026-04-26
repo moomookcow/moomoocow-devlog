@@ -246,6 +246,7 @@
 
   .markdown-preview {
     color: var(--foreground);
+    font-family: var(--font-sans), sans-serif;
     font-size: 1.6rem;
     line-height: 1.95;
     word-break: break-word;
@@ -398,6 +399,49 @@
   .markdown-preview img {
     max-width: 100%;
     height: auto;
+  }
+
+  @media (max-width: 640px) {
+    .markdown-preview {
+      font-size: 1.2rem;
+      line-height: 1.75;
+    }
+
+    .markdown-preview p,
+    .markdown-preview li,
+    .markdown-preview td,
+    .markdown-preview th {
+      font-size: 1.2rem;
+    }
+
+    .markdown-preview h1 {
+      font-size: 2rem;
+    }
+
+    .markdown-preview h2 {
+      font-size: 1.7rem;
+    }
+
+    .markdown-preview h3 {
+      font-size: 1.5rem;
+    }
+
+    .markdown-preview h4 {
+      font-size: 1.35rem;
+    }
+
+    .markdown-preview h5 {
+      font-size: 1.25rem;
+    }
+
+    .markdown-preview h6 {
+      font-size: 1.15rem;
+    }
+
+    .markdown-preview pre code {
+      font-size: 1rem;
+      line-height: 1.55;
+    }
   }
 
 }
