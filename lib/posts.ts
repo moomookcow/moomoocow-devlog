@@ -191,6 +191,23 @@ export async function listAdminPosts(supabase: SupabaseQueryClient, limit = 50):
   return (data ?? []).map((row) => mapPost(row as PostRow));
 }
 
+export async function listPublishedPosts(supabase: SupabaseQueryClient, limit = 50): Promise<AdminPost[]> {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id, slug, title, summary, content_mdx, tags, status, created_at, updated_at, published_at, category, visibility, thumbnail_url")
+    .eq("status", "published")
+    .eq("visibility", "public")
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("updated_at", { ascending: false, nullsFirst: false })
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((row) => mapPost(row as PostRow));
+}
+
 export async function getPostBySlug(
   supabase: SupabaseQueryClient,
   slug: string,
@@ -270,6 +287,17 @@ export async function getPostBySlug(
 
   if (!data) return null;
   return mapPost(data as PostRow);
+}
+
+export async function getPublishedPostBySlug(
+  supabase: SupabaseQueryClient,
+  slug: string,
+): Promise<AdminPost | null> {
+  const post = await getPostBySlug(supabase, slug);
+  if (!post) return null;
+  if (post.status !== "published") return null;
+  if (post.visibility !== "public") return null;
+  return post;
 }
 
 export async function createPost(

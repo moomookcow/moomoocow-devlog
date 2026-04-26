@@ -2,10 +2,11 @@
 
 import NextImage from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import ScrollToc from "@/components/shared/scroll-toc";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -99,6 +100,27 @@ async function optimizeImageFile(file: File): Promise<File> {
 
 function isSupabaseStorageImage(url: string) {
   return url.includes(SUPABASE_STORAGE_PUBLIC_PATH);
+}
+
+function slugifyHeading(text: string) {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[`~!@#$%^&*()+={}\[\]|\\:;"'<>,.?/]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function readNodeText(node: ReactNode): string {
+  if (node == null || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(readNodeText).join(" ");
+  if (typeof node === "object" && "props" in node) {
+    const props = (node as { props?: { children?: ReactNode } }).props;
+    return readNodeText(props?.children);
+  }
+  return "";
 }
 
 function MarkdownImage({ src, alt }: { src?: string | Blob; alt?: string }) {
@@ -199,6 +221,29 @@ export default function VelogEditor({ action, initialPost }: VelogEditorProps) {
 
     return merged.join(",");
   }, [tagInput, tags]);
+
+  const previewMarkdownComponents = useMemo(() => {
+    const used = new Map<string, number>();
+    const createHeading = (tag: "h1" | "h2" | "h3", fallback: string) => {
+      return function HeadingRenderer({ children }: { children?: ReactNode }) {
+        const text = readNodeText(children).trim();
+        const base = slugifyHeading(text) || fallback;
+        const count = (used.get(base) ?? 0) + 1;
+        used.set(base, count);
+        const id = count === 1 ? base : `${base}-${count}`;
+        if (tag === "h1") return <h1 id={id}>{children}</h1>;
+        if (tag === "h2") return <h2 id={id}>{children}</h2>;
+        return <h3 id={id}>{children}</h3>;
+      };
+    };
+
+    return {
+      img: ({ src, alt }: { src?: string | Blob; alt?: string }) => <MarkdownImage src={src} alt={alt} />,
+      h1: createHeading("h1", "h1"),
+      h2: createHeading("h2", "h2"),
+      h3: createHeading("h3", "h3"),
+    };
+  }, [content]);
 
   useEffect(() => {
     const el = contentRef.current;
@@ -442,18 +487,24 @@ export default function VelogEditor({ action, initialPost }: VelogEditorProps) {
         </div>
 
         <div className="min-h-0 overflow-hidden border-l border-border/55">
-          <ScrollArea className="h-full w-full">
-            <div className="markdown-preview p-5">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  img: ({ src, alt }) => <MarkdownImage src={src} alt={alt} />,
-                }}
-              >
-                {content}
-              </ReactMarkdown>
-            </div>
-          </ScrollArea>
+          <div className={cn("grid h-full min-h-0", !isEditMode && "lg:grid-cols-[minmax(0,1fr)_240px]")}>
+            <ScrollArea className="h-full w-full">
+              <div id="editor-preview-content" className="markdown-preview p-5">
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={previewMarkdownComponents}>
+                  {content}
+                </ReactMarkdown>
+              </div>
+            </ScrollArea>
+            {!isEditMode ? (
+              <div className="hidden min-h-0 border-l border-border/50 lg:block">
+                <ScrollArea className="h-full w-full">
+                  <div className="p-4">
+                    <ScrollToc contentSelector="#editor-preview-content" />
+                  </div>
+                </ScrollArea>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 

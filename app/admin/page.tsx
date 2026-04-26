@@ -1,3 +1,4 @@
+import NextImage from "next/image";
 import Link from "next/link";
 
 import CategoryPanel from "@/components/shared/category-panel";
@@ -213,11 +214,25 @@ export default async function AdminPage() {
                   {posts.map((post) => (
                     <li key={post.id} className="surface-subtle rounded-none p-3">
                       <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 space-y-1">
+                        <div className="flex min-w-0 items-start gap-3">
+                          {post.thumbnailUrl ? (
+                            <div className="hidden shrink-0 overflow-hidden rounded-none border border-border/60 sm:block">
+                              <NextImage
+                                src={post.thumbnailUrl}
+                                alt={`${post.title} thumbnail`}
+                                width={160}
+                                height={90}
+                                sizes="160px"
+                                className="h-20 w-32 object-cover"
+                              />
+                            </div>
+                          ) : null}
+                          <div className="min-w-0 space-y-1">
                           <Link href={`/admin/posts/${encodeURIComponent(post.slug)}`} className="korean-display block truncate text-xl hover:opacity-85">
                             {post.title}
                           </Link>
                           <p className="truncate font-mono text-xs text-muted-foreground">/{post.slug}</p>
+                          </div>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
                           <Badge variant="outline" className="rounded-sm px-2.5 py-1 text-sm">

@@ -1,3 +1,4 @@
+import NextImage from "next/image";
 import Link from "next/link";
 
 import CategoryPanel from "@/components/shared/category-panel";
@@ -5,6 +6,8 @@ import RightFeedPanel from "@/components/shared/right-feed-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { sharedCategoryGroups } from "@/lib/mock-data";
+import { listPublishedPosts } from "@/lib/posts";
+import { createClient } from "@/lib/supabase/server";
 
 const mockPopular = [
   "Next.js App Router에서 인증 흐름 정리",
@@ -114,7 +117,41 @@ const homeFeedSections = [
   },
 ];
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+function formatDate(value: string | null) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
+export default async function HomePage() {
+  const supabase = await createClient();
+  let publishedPosts = [] as Awaited<ReturnType<typeof listPublishedPosts>>;
+
+  try {
+    publishedPosts = await listPublishedPosts(supabase, 50);
+  } catch {
+    publishedPosts = [];
+  }
+
+  const visiblePosts =
+    publishedPosts.length > 0
+      ? publishedPosts.map((post) => ({
+          slug: post.slug,
+          title: post.title,
+          summary: post.summary ?? "",
+          category: post.category ?? "Uncategorized",
+          date: formatDate(post.publishedAt || post.updatedAt),
+          thumbnailUrl: post.thumbnailUrl,
+        }))
+      : mockPosts.map((post) => ({ ...post, thumbnailUrl: null as string | null }));
+
   return (
     <div className="mx-auto w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
       <section className="surface-panel mb-4 px-5 py-8 sm:px-8 sm:py-10">
@@ -132,13 +169,25 @@ export default function HomePage() {
         </aside>
 
         <section className="space-y-3">
-          {mockPosts.map((post) => (
+          {visiblePosts.map((post) => (
             <Link
               key={post.slug}
               href={`/posts/${post.slug}`}
               className="group/card block"
             >
               <Card className="theme-hover-soft surface-panel rounded-none cursor-pointer">
+                {post.thumbnailUrl ? (
+                  <div className="border-b border-border/60">
+                    <NextImage
+                      src={post.thumbnailUrl}
+                      alt={`${post.title} thumbnail`}
+                      width={1200}
+                      height={630}
+                      sizes="(max-width: 1024px) 100vw, 860px"
+                      className="h-48 w-full object-cover"
+                    />
+                  </div>
+                ) : null}
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between gap-2">
                     <Badge
