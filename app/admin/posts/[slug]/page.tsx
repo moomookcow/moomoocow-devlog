@@ -147,7 +147,24 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
   const headingRenderers = createHeadingRenderers();
 
   return (
-    <main className="mx-auto min-h-full w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
+    <main className="relative mx-auto min-h-full w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
+      {post.thumbnailUrl ? (
+        <div
+          className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 overflow-hidden"
+          aria-hidden="true"
+        >
+          <div className="relative h-full w-full">
+            <NextImage
+              src={post.thumbnailUrl}
+              alt=""
+              fill
+              sizes="100vw"
+              className="object-cover opacity-68 blur-0"
+            />
+            <div className="absolute inset-0 bg-background/46" />
+          </div>
+        </div>
+      ) : null}
       <ScrollProgressBar className="pointer-events-none fixed top-0 left-0 z-30 h-1 w-screen" />
       {successMessage ? (
         <p className="text-sm text-foreground" role="status">
@@ -228,20 +245,6 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
                 </Accordion>
               ) : null}
             </CardHeader>
-            {post.thumbnailUrl ? (
-              <CardContent className="pt-0">
-                <div className="overflow-hidden rounded-none border border-border/60">
-                  <NextImage
-                    src={post.thumbnailUrl}
-                    alt={`${post.title} thumbnail`}
-                    width={1600}
-                    height={900}
-                    sizes="(max-width: 1024px) 100vw, 1024px"
-                    className="h-auto w-full object-cover"
-                  />
-                </div>
-              </CardContent>
-            ) : null}
           </Card>
 
           <Card>
