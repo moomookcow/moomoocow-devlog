@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { requireAdminOrRedirect } from "@/lib/admin-auth";
 import { createPost, updatePostBySlug } from "@/lib/posts";
+import { generateSummaryFromMarkdown, sanitizeSummaryText } from "@/lib/summary";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 const THUMBNAIL_BUCKET = "post-thumbnails";
@@ -65,7 +66,8 @@ export async function createPostAction(formData: FormData) {
   const statusRaw = String(formData.get("status") ?? "draft");
   const status = statusRaw === "published" ? "published" : "draft";
   const finalTitle = status === "published" && publishTitle ? publishTitle : title;
-  const finalSummary = status === "published" && publishSummary ? publishSummary : summary;
+  const candidateSummary = status === "published" && publishSummary ? publishSummary : summary;
+  const finalSummary = sanitizeSummaryText(candidateSummary, 180) || generateSummaryFromMarkdown(contentMdx, 180);
 
   if (!finalTitle || !contentMdx) {
     redirect("/admin/new?error=required_fields");

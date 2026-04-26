@@ -23,6 +23,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { generateSummaryFromMarkdown } from "@/lib/summary";
 import { cn } from "@/lib/utils";
 import { normalizeSlugInput, type AdminPost } from "@/lib/posts";
 import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -177,7 +178,7 @@ export default function VelogEditor({ action, initialPost, categoryOptions = DEF
   const thumbnailFileRef = useRef<HTMLInputElement | null>(null);
 
   const summary = useMemo(
-    () => content.replace(/[#>*_\-\[\]()`]/g, " ").replace(/\s+/g, " ").trim().slice(0, 180),
+    () => generateSummaryFromMarkdown(content, 180),
     [content],
   );
 

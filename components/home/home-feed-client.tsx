@@ -7,9 +7,10 @@ import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 
 import RightFeedPanel from "@/components/shared/right-feed-panel";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+
+const DEFAULT_THUMBNAIL_SRC = "/default-thumbnail.svg";
 
 type HomePostCard = {
   slug: string;
@@ -129,8 +130,8 @@ export default function HomeFeedClient({
 
   return (
     <>
-      <section className="space-y-3">
-        <div className="surface-subtle flex flex-wrap items-center gap-2 px-3 py-2">
+      <section className="space-y-3 overflow-x-hidden">
+        <div className="surface-subtle flex min-w-0 flex-wrap items-center gap-2 px-3 py-2">
           <button
             type="button"
             onClick={() => {
@@ -153,11 +154,11 @@ export default function HomeFeedClient({
                 setActiveTagName(tag.label);
               }}
               className={cn(
-                "korean-display inline-flex cursor-pointer items-center rounded-none border px-2 py-1 text-sm hover:opacity-85",
+                "korean-display inline-flex max-w-[10rem] cursor-pointer items-center rounded-none border px-2 py-1 text-sm hover:opacity-85 sm:max-w-none",
                 selectedTagSlug === tag.slug ? "border-primary bg-primary text-primary-foreground" : "border-border/60",
               )}
             >
-              #{tag.label}
+              <span className="truncate">#{tag.label}</span>
             </button>
           ))}
           {tagOptions.length === 0 ? (
@@ -183,7 +184,7 @@ export default function HomeFeedClient({
 
         {selectedTagSlug || lowerQuery ? (
           <div className="surface-subtle px-3 py-2">
-            <p className="korean-display text-sm text-muted-foreground">
+            <p className="korean-display break-words text-sm text-muted-foreground">
               필터: {activeTagName || selectedTagSlug || "전체"} {query.trim() ? `· 검색어 "${query.trim()}"` : ""}
             </p>
           </div>
@@ -201,53 +202,57 @@ export default function HomeFeedClient({
                 router.push(`/posts/${post.slug}`);
               }
             }}
-            className="group/card block cursor-pointer"
+            className="group/card block min-w-0 cursor-pointer"
           >
-            <Card className="theme-hover-soft surface-panel rounded-none cursor-pointer">
-              {post.thumbnailUrl ? (
-                <div className="border-b border-border/60">
-                  <NextImage
-                    src={post.thumbnailUrl}
-                    alt={`${post.title} thumbnail`}
-                    width={1200}
-                    height={630}
-                    sizes="(max-width: 1024px) 100vw, 860px"
-                    className="h-48 w-full object-cover"
-                  />
-                </div>
-              ) : null}
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                    {(post.tags ?? []).slice(0, 3).map((tag) => {
-                      const hrefSlug = slugifyTagForHref(tag);
-                      const label = formatTagLabel(tag);
-                      if (!hrefSlug || !label) return null;
-                      return (
-                        <Link
-                          key={`${post.slug}-header-${tag}`}
-                          href={`/tags/${encodeURIComponent(hrefSlug)}`}
-                          className="inline-flex items-center rounded-sm border border-border/70 bg-muted/70 px-2 py-0.5 font-mono text-xs text-foreground transition-opacity hover:opacity-80"
-                          onClick={(event) => event.stopPropagation()}
-                          onKeyDown={(event) => event.stopPropagation()}
-                        >
-                          #{label}
-                        </Link>
-                      );
-                    })}
-                    {post.tags.length === 0 ? (
-                      <span className="inline-flex items-center rounded-sm border border-border/70 bg-muted/70 px-2 py-0.5 font-mono text-xs text-muted-foreground">
-                        #태그없음
-                      </span>
-                    ) : null}
+            <Card className="theme-hover-soft surface-panel rounded-none cursor-pointer overflow-hidden">
+              <div className="flex gap-3 px-3 py-2.5 sm:min-h-[8.5rem] sm:px-4 sm:py-3">
+                <div className="hidden w-36 shrink-0 self-stretch overflow-hidden border border-border/60 sm:block sm:max-h-[8.5rem]">
+                  <div className="relative h-full w-full">
+                    <NextImage
+                      src={post.thumbnailUrl || DEFAULT_THUMBNAIL_SRC}
+                      alt={`${post.title} thumbnail`}
+                      fill
+                      sizes="144px"
+                      className="object-cover"
+                    />
                   </div>
-                  <span className="shrink-0 font-mono text-xs text-muted-foreground">{post.date}</span>
                 </div>
-                <CardTitle className="korean-display text-2xl transition-opacity duration-150 group-hover/card:opacity-80">{post.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="font-mono text-sm text-muted-foreground">{post.summary}</p>
-              </CardContent>
+
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                      {(post.tags ?? []).slice(0, 3).map((tag) => {
+                        const hrefSlug = slugifyTagForHref(tag);
+                        const label = formatTagLabel(tag);
+                        if (!hrefSlug || !label) return null;
+                        return (
+                          <Link
+                            key={`${post.slug}-header-${tag}`}
+                            href={`/tags/${encodeURIComponent(hrefSlug)}`}
+                            className="inline-flex max-w-[11rem] items-center rounded-sm border border-border/70 bg-muted/70 px-2 py-0.5 font-mono text-xs text-foreground transition-opacity hover:opacity-80 sm:max-w-none"
+                            onClick={(event) => event.stopPropagation()}
+                            onKeyDown={(event) => event.stopPropagation()}
+                          >
+                            <span className="truncate">#{label}</span>
+                          </Link>
+                        );
+                      })}
+                      {post.tags.length === 0 ? (
+                        <span className="inline-flex items-center rounded-sm border border-border/70 bg-muted/70 px-2 py-0.5 font-mono text-xs text-muted-foreground">
+                          #태그없음
+                        </span>
+                      ) : null}
+                    </div>
+                    <span className="font-mono text-xs text-muted-foreground sm:shrink-0">{post.date}</span>
+                  </div>
+
+                  <CardTitle className="korean-display line-clamp-2 text-2xl leading-snug transition-opacity duration-150 group-hover/card:opacity-80">
+                    {post.title}
+                  </CardTitle>
+                  <p className="line-clamp-2 font-mono text-sm text-muted-foreground">{post.summary}</p>
+                </div>
+              </div>
+
             </Card>
           </article>
         ))}

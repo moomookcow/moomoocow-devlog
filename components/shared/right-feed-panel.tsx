@@ -73,7 +73,7 @@ export default function RightFeedPanel({
   return (
     <Card
       className={cn(
-        "surface-panel rounded-none flex h-[calc(100dvh-26rem)] min-h-[520px] flex-col overflow-hidden",
+        "surface-panel rounded-none flex h-auto min-h-0 flex-col overflow-hidden lg:h-[calc(100dvh-26rem)] lg:min-h-[520px]",
         className,
       )}
     >
