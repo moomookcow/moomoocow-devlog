@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 import CommentsThread from "@/components/posts/comments-thread";
 import AutoScrollBottom from "@/components/posts/auto-scroll-bottom";
 import CategoryPanel from "@/components/shared/category-panel";
+import ScrollProgressBar from "@/components/shared/scroll-progress-bar";
 import ScrollToc from "@/components/shared/scroll-toc";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -169,15 +170,13 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
     currentIndex >= 0 && currentIndex < publishedPosts.length - 1
       ? publishedPosts[currentIndex + 1]
       : null;
-  const sameCategoryPosts = post.category
-    ? publishedPosts.filter((item) => item.category === post.category).slice(0, 16)
-    : [];
   const readingMinutes = estimateReadMinutes(post.contentMdx);
   const headingRenderers = createHeadingRenderers();
 
   return (
     <main className="mx-auto w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
       <AutoScrollBottom enabled={shouldJumpToBottom} />
+      <ScrollProgressBar className="pointer-events-none fixed top-0 left-0 z-30 h-1 w-screen" />
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
         <aside className="self-start space-y-4">
           <CategoryPanel groups={categoryGroups} />
@@ -186,15 +185,24 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
         <article className="space-y-3">
           <Card className="surface-panel rounded-none">
             <CardHeader className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <span className="font-mono">{formatDate(post.publishedAt || post.updatedAt)}</span>
-                <span>•</span>
-                <span className="font-mono">{readingMinutes} min read</span>
-                <span>•</span>
-                <span className="font-mono">/{post.slug}</span>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                  <span className="font-mono">{formatDate(post.publishedAt || post.updatedAt)}</span>
+                  <span>•</span>
+                  <span className="font-mono">{readingMinutes} min read</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link href="/" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-none px-4")}>
+                    홈으로
+                  </Link>
+                  <Link
+                    href={`/admin/posts/${encodeURIComponent(post.slug)}`}
+                    className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-none px-4")}
+                  >
+                    관리자 상세
+                  </Link>
+                </div>
               </div>
-              <CardTitle className="korean-display text-4xl leading-tight sm:text-5xl">{post.title}</CardTitle>
-              <p className="korean-display text-lg text-foreground/85">{post.summary || "소개글이 없습니다."}</p>
               <div className="flex flex-wrap gap-2">
                 {(post.tags ?? []).map((tag) => (
                   <Link key={tag} href={`/tags/${encodeURIComponent(normalizeSlugInput(tag) || tag)}`}>
@@ -207,17 +215,8 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
                   </Link>
                 ))}
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Link href="/" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-none px-4")}>
-                  홈으로
-                </Link>
-                <Link
-                  href={`/admin/posts/${encodeURIComponent(post.slug)}`}
-                  className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-none px-4")}
-                >
-                  관리자 상세
-                </Link>
-              </div>
+              <CardTitle className="korean-display text-4xl leading-tight sm:text-5xl">{post.title}</CardTitle>
+              <p className="korean-display text-lg text-foreground/85">{post.summary || "소개글이 없습니다."}</p>
             </CardHeader>
             {post.thumbnailUrl ? (
               <CardContent className="pt-0">
@@ -233,42 +232,6 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
                 </div>
               </CardContent>
             ) : null}
-          </Card>
-
-          <Card className="surface-panel rounded-none">
-            <CardHeader>
-              <CardTitle className="korean-display text-2xl">
-                같은 카테고리 글
-                {post.category ? ` · ${post.category}` : ""}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {sameCategoryPosts.length === 0 ? (
-                <p className="korean-display text-sm text-muted-foreground">같은 카테고리 글이 아직 없습니다.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {sameCategoryPosts.map((item) => {
-                    const isCurrent = item.slug === post.slug;
-                    return (
-                      <li key={item.id}>
-                        <Link
-                          href={`/posts/${encodeURIComponent(item.slug)}`}
-                          aria-current={isCurrent ? "page" : undefined}
-                          className={cn(
-                            "korean-display block rounded-none px-2 py-1 transition-opacity",
-                            isCurrent
-                              ? "font-bold text-foreground"
-                              : "text-muted-foreground hover:opacity-85",
-                          )}
-                        >
-                          {item.title}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </CardContent>
           </Card>
 
           <Card className="surface-panel rounded-none">

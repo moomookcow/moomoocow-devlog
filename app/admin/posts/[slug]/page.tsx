@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import ScrollProgressBar from "@/components/shared/scroll-progress-bar";
 import ScrollToc from "@/components/shared/scroll-toc";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -115,6 +116,7 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
 
   return (
     <main className="mx-auto min-h-full w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
+      <ScrollProgressBar className="pointer-events-none fixed top-0 left-0 z-30 h-1 w-screen" />
       {successMessage ? (
         <p className="text-sm text-foreground" role="status">
           {successMessage}
@@ -125,12 +127,25 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
         <section className="space-y-4">
           <Card>
             <CardHeader className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">{post.status.toUpperCase()}</Badge>
-                <span className="text-xs text-muted-foreground">/{post.slug}</span>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">{post.status.toUpperCase()}</Badge>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link href="/admin" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-md px-4")}>
+                    대시보드로
+                  </Link>
+                  <Link
+                    href={`/admin/new?slug=${encodeURIComponent(post.slug)}`}
+                    className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-md px-4")}
+                  >
+                    글 수정
+                  </Link>
+                  <Link href="/admin/new" className={cn(buttonVariants({ variant: "default" }), "h-9 rounded-md px-4")}>
+                    새 글 작성
+                  </Link>
+                </div>
               </div>
-              <CardTitle className="text-3xl leading-tight">{post.title}</CardTitle>
-              <CardDescription>{post.summary || "소개글이 없습니다."}</CardDescription>
               {post.tags.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-2">
                   {post.tags.map((tag) => (
@@ -140,20 +155,8 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
                   ))}
                 </div>
               ) : null}
-              <div className="flex flex-wrap items-center gap-2">
-                <Link href="/admin" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-md px-4")}>
-                  대시보드로
-                </Link>
-                <Link
-                  href={`/admin/new?slug=${encodeURIComponent(post.slug)}`}
-                  className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-md px-4")}
-                >
-                  글 수정
-                </Link>
-                <Link href="/admin/new" className={cn(buttonVariants({ variant: "default" }), "h-9 rounded-md px-4")}>
-                  새 글 작성
-                </Link>
-              </div>
+              <CardTitle className="text-3xl leading-tight">{post.title}</CardTitle>
+              <CardDescription>{post.summary || "소개글이 없습니다."}</CardDescription>
             </CardHeader>
             {post.thumbnailUrl ? (
               <CardContent className="pt-0">
