@@ -21,7 +21,7 @@ import { getPublishedPostBySlug, incrementPostView, listPublishedPosts, normaliz
 import { createPublicClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 type PublicPostPageProps = {
   params: Promise<{ slug: string }>;
@@ -159,20 +159,23 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
 
   const post = await getPublishedPostBySlug(supabase, slug);
   if (!post) notFound();
-  try {
-    await incrementPostView(supabase, post.id);
-  } catch {
+  void incrementPostView(supabase, post.id).catch(() => {
     // no-op: 조회수 집계 실패가 본문 렌더를 막지 않도록 한다.
-  }
+  });
 
-  const publishedPosts = await listPublishedPosts(supabase, 200);
-  const comments = await listPublishedCommentsByPostId(supabase, post.id);
+  const [publishedPosts, comments, categories] = await Promise.all([
+    listPublishedPosts(supabase, 200),
+    listPublishedCommentsByPostId(supabase, post.id),
+    listActiveCategories(supabase, 200).catch(() => null),
+  ]);
+
   let categoryGroups = sharedCategoryGroups;
   try {
-    const categories = await listActiveCategories(supabase, 200);
+    if (categories) {
     const groups = buildCategoryPanelGroups(categories, publishedPosts, { hrefBase: "/posts" });
     if (groups.length > 0) {
       categoryGroups = groups;
+    }
     }
   } catch {
     categoryGroups = sharedCategoryGroups;
