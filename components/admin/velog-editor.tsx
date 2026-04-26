@@ -6,7 +6,6 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent,
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import ScrollToc from "@/components/shared/scroll-toc";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -517,7 +516,7 @@ export default function VelogEditor({ action, initialPost, categoryOptions = DEF
         </div>
 
         <div className="min-h-0 overflow-hidden border-l border-border/55">
-          <div className={cn("grid h-full min-h-0", !isEditMode && "lg:grid-cols-[minmax(0,1fr)_240px]")}>
+          <div className="grid h-full min-h-0">
             <ScrollArea className="h-full w-full">
               <div id="editor-preview-content" className="markdown-preview p-5">
                 <ReactMarkdown remarkPlugins={[remarkGfm]} components={previewMarkdownComponents}>
@@ -525,15 +524,6 @@ export default function VelogEditor({ action, initialPost, categoryOptions = DEF
                 </ReactMarkdown>
               </div>
             </ScrollArea>
-            {!isEditMode ? (
-              <div className="hidden min-h-0 border-l border-border/50 lg:block">
-                <ScrollArea className="h-full w-full">
-                  <div className="p-4">
-                    <ScrollToc contentSelector="#editor-preview-content" />
-                  </div>
-                </ScrollArea>
-              </div>
-            ) : null}
           </div>
         </div>
       </div>
