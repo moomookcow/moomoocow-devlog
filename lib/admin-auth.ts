@@ -24,10 +24,13 @@ export async function requireAdminOrRedirect(
   }
 
   if (!isAdminAllowed(user)) {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // noop
+    }
     redirect("/admin/login?error=forbidden");
   }
 
   return user;
 }
-

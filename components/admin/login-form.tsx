@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ type LoginFormProps = {
 };
 
 export default function LoginForm({ nextPath = "/admin" }: LoginFormProps) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,7 +35,8 @@ export default function LoginForm({ nextPath = "/admin" }: LoginFormProps) {
       return;
     }
 
-    window.location.href = nextPath;
+    router.replace(nextPath);
+    router.refresh();
   }
 
   return (

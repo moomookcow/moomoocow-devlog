@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import LoginForm from "@/components/admin/login-form";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { isAdminAllowed } from "@/lib/admin";
+import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
 type AdminLoginPageProps = {
@@ -21,8 +24,21 @@ const ERROR_MESSAGE: Record<string, string> = {
 export default async function AdminLoginPage({ searchParams }: AdminLoginPageProps) {
   const params = searchParams ? await searchParams : undefined;
   const next = params?.next ?? "/admin";
+  const safeNext = next.startsWith("/") ? next : "/admin";
   const errorKey = params?.error;
   const errorMessage = errorKey ? ERROR_MESSAGE[errorKey] ?? "로그인 중 오류가 발생했습니다." : null;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user && isAdminAllowed(user)) {
+    redirect(safeNext);
+  }
+
+  if (user && !isAdminAllowed(user)) {
+    await supabase.auth.signOut();
+  }
 
   return (
     <main className="mx-auto flex min-h-full w-full max-w-5xl flex-col gap-5 px-4 py-10 sm:px-6 lg:px-8">
@@ -55,7 +71,7 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
             </p>
           ) : null}
 
-          <LoginForm nextPath={next} />
+          <LoginForm nextPath={safeNext} />
         </CardContent>
       </Card>
     </main>
