@@ -7,11 +7,12 @@ import remarkGfm from "remark-gfm";
 
 import ScrollProgressBar from "@/components/shared/scroll-progress-bar";
 import ScrollToc from "@/components/shared/scroll-toc";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireAdminOrRedirect } from "@/lib/admin-auth";
-import { getPostBySlug } from "@/lib/posts";
+import { getPostBySlug, listAdminPosts } from "@/lib/posts";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
@@ -99,6 +100,30 @@ function MarkdownImage({ src, alt }: { src?: string | Blob; alt?: string }) {
   return <img src={src} alt={alt ?? "markdown image"} loading="lazy" decoding="async" />;
 }
 
+function formatDate(value: string | null) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
+function formatAuthorName(value: string | null) {
+  if (!value) return "admin";
+  const local = value.split("@")[0]?.trim();
+  return local || "admin";
+}
+
+function formatCategoryLabel(value: string | null) {
+  if (!value) return "";
+  const withSpaces = value.trim().replace(/[-_]+/g, " ");
+  if (!/[a-zA-Z]/.test(withSpaces)) return withSpaces;
+  return withSpaces.replace(/\b[a-z]/g, (char) => char.toUpperCase());
+}
+
 export default async function AdminPostDetailPage({ params, searchParams }: AdminPostDetailPageProps) {
   const supabase = await createClient();
   await requireAdminOrRedirect(supabase, "/admin");
@@ -109,6 +134,13 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
   if (!post) {
     notFound();
   }
+
+  const allPosts = await listAdminPosts(supabase, 300);
+  const sameCategoryPosts = post.category
+    ? allPosts.filter((item) => item.category === post.category)
+    : [];
+  const authorName = formatAuthorName(post.authorEmail);
+  const categoryLabel = formatCategoryLabel(post.category);
 
   const query = searchParams ? await searchParams : undefined;
   const successMessage = query?.success ? SUCCESS_MESSAGE[query.success] : null;
@@ -126,11 +158,9 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="space-y-4">
           <Card>
-            <CardHeader className="space-y-3">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline">{post.status.toUpperCase()}</Badge>
-                </div>
+            <CardHeader className="space-y-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <CardTitle className="text-3xl leading-[1.1] sm:text-4xl">{post.title}</CardTitle>
                 <div className="flex flex-wrap items-center gap-2">
                   <Link href="/admin" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-md px-4")}>
                     대시보드로
@@ -146,17 +176,57 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
                   </Link>
                 </div>
               </div>
+              <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
+                <Badge variant="outline">{post.status.toUpperCase()}</Badge>
+                <span className="korean-display font-medium text-foreground">{authorName}</span>
+                <span>·</span>
+                <span className="font-mono">{formatDate(post.publishedAt || post.updatedAt)}</span>
+              </div>
               {post.tags.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-2">
                   {post.tags.map((tag) => (
-                    <Badge key={tag} variant="outline">
+                    <Badge key={tag} variant="outline" className="px-3 py-1.5 text-sm">
                       {tag}
                     </Badge>
                   ))}
                 </div>
               ) : null}
-              <CardTitle className="text-3xl leading-tight">{post.title}</CardTitle>
-              <CardDescription>{post.summary || "소개글이 없습니다."}</CardDescription>
+              {post.category ? (
+                <Accordion multiple defaultValue={["same-category"]} className="w-full border-t border-border/60 pt-2">
+                  <AccordionItem value="same-category" className="border-b-0">
+                    <AccordionTrigger className="korean-display rounded-none px-1 py-1 text-2xl hover:no-underline">
+                      같은 카테고리 글 · {categoryLabel}
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-0 [&_a]:no-underline">
+                      {sameCategoryPosts.length > 0 ? (
+                        <ul className="space-y-1">
+                          {sameCategoryPosts.slice(0, 16).map((item) => {
+                            const isCurrent = item.slug === post.slug;
+                            return (
+                              <li key={item.id}>
+                                <Link
+                                  href={`/admin/posts/${encodeURIComponent(item.slug)}`}
+                                  aria-current={isCurrent ? "page" : undefined}
+                                  className={cn(
+                                    "korean-display block rounded-none px-1 py-1 text-2xl no-underline",
+                                    isCurrent ? "font-bold text-foreground" : "text-muted-foreground hover:text-foreground",
+                                  )}
+                                >
+                                  {item.title}
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : (
+                        <p className="korean-display px-1 py-1 text-2xl text-muted-foreground">
+                          같은 카테고리 글이 아직 없습니다.
+                        </p>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              ) : null}
             </CardHeader>
             {post.thumbnailUrl ? (
               <CardContent className="pt-0">

@@ -96,7 +96,7 @@ export async function listPublishedPostsByTagSlug(
 
   const postsResult = await supabase
     .from("posts")
-    .select("id, slug, title, summary, content_mdx, tags, status, created_at, updated_at, published_at, category, visibility, thumbnail_url")
+    .select("id, slug, title, summary, content_mdx, tags, status, author_email, created_at, updated_at, published_at, category, visibility, thumbnail_url")
     .in("id", postIds)
     .eq("status", "published")
     .eq("visibility", "public")
@@ -116,6 +116,7 @@ export async function listPublishedPostsByTagSlug(
     contentMdx: String((row as { content_mdx: string }).content_mdx),
     tags: (((row as { tags: string[] | null }).tags) ?? []),
     status: "published" as const,
+    authorEmail: ((row as { author_email: string | null }).author_email ?? null),
     createdAt: ((row as { created_at: string | null }).created_at ?? null),
     updatedAt: ((row as { updated_at: string | null }).updated_at ?? null),
     publishedAt: ((row as { published_at: string | null }).published_at ?? null),

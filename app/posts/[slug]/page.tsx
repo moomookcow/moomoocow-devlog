@@ -10,8 +10,8 @@ import AutoScrollBottom from "@/components/posts/auto-scroll-bottom";
 import CategoryPanel from "@/components/shared/category-panel";
 import ScrollProgressBar from "@/components/shared/scroll-progress-bar";
 import ScrollToc from "@/components/shared/scroll-toc";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
 import { listActiveCategories } from "@/lib/categories";
@@ -86,6 +86,19 @@ function formatDate(value: string | null) {
     month: "2-digit",
     day: "2-digit",
   });
+}
+
+function formatAuthorName(value: string | null) {
+  if (!value) return "moomoocow";
+  const local = value.split("@")[0]?.trim();
+  return local || "moomoocow";
+}
+
+function formatCategoryLabel(value: string | null) {
+  if (!value) return "";
+  const withSpaces = value.trim().replace(/[-_]+/g, " ");
+  if (!/[a-zA-Z]/.test(withSpaces)) return withSpaces;
+  return withSpaces.replace(/\b[a-z]/g, (char) => char.toUpperCase());
 }
 
 function MarkdownImage({ src, alt }: { src?: string | Blob; alt?: string }) {
@@ -171,6 +184,11 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
       ? publishedPosts[currentIndex + 1]
       : null;
   const readingMinutes = estimateReadMinutes(post.contentMdx);
+  const authorName = formatAuthorName(post.authorEmail);
+  const categoryLabel = formatCategoryLabel(post.category);
+  const sameCategoryPosts = post.category
+    ? publishedPosts.filter((item) => item.category === post.category)
+    : [];
   const headingRenderers = createHeadingRenderers();
 
   return (
@@ -184,39 +202,65 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
 
         <article className="space-y-3">
           <Card className="surface-panel rounded-none">
-            <CardHeader className="space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  <span className="font-mono">{formatDate(post.publishedAt || post.updatedAt)}</span>
-                  <span>•</span>
-                  <span className="font-mono">{readingMinutes} min read</span>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Link href="/" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-none px-4")}>
-                    홈으로
-                  </Link>
-                  <Link
-                    href={`/admin/posts/${encodeURIComponent(post.slug)}`}
-                    className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-none px-4")}
-                  >
-                    관리자 상세
-                  </Link>
-                </div>
+            <CardHeader className="space-y-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <CardTitle className="korean-display text-4xl leading-[1.08] sm:text-5xl lg:text-6xl">{post.title}</CardTitle>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
+                <span className="korean-display font-medium text-foreground">{authorName}</span>
+                <span>·</span>
+                <span className="font-mono">{formatDate(post.publishedAt || post.updatedAt)}</span>
+                <span>·</span>
+                <span className="font-mono">{readingMinutes} min read</span>
+              </div>
+              <div className="flex flex-wrap gap-2.5">
                 {(post.tags ?? []).map((tag) => (
                   <Link key={tag} href={`/tags/${encodeURIComponent(normalizeSlugInput(tag) || tag)}`}>
                     <Badge
                       variant="outline"
-                      className="rounded-sm px-2.5 py-1 text-sm transition-opacity hover:opacity-80"
+                      className="rounded-sm px-3 py-1.5 text-sm transition-opacity hover:opacity-80"
                     >
                       {tag}
                     </Badge>
                   </Link>
                 ))}
               </div>
-              <CardTitle className="korean-display text-4xl leading-tight sm:text-5xl">{post.title}</CardTitle>
-              <p className="korean-display text-lg text-foreground/85">{post.summary || "소개글이 없습니다."}</p>
+              {post.category ? (
+                <Accordion multiple defaultValue={["same-category"]} className="w-full border-t border-border/60 pt-2">
+                  <AccordionItem value="same-category" className="border-b-0">
+                    <AccordionTrigger className="korean-display rounded-none px-1 py-1 text-2xl hover:no-underline">
+                      같은 카테고리 글 · {categoryLabel}
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-0 [&_a]:no-underline">
+                      {sameCategoryPosts.length > 0 ? (
+                        <ul className="space-y-1">
+                          {sameCategoryPosts.slice(0, 12).map((item) => {
+                            const isCurrent = item.slug === post.slug;
+                            return (
+                              <li key={item.id}>
+                                <Link
+                                  href={`/posts/${encodeURIComponent(item.slug)}`}
+                                  aria-current={isCurrent ? "page" : undefined}
+                                  className={cn(
+                                    "korean-display block rounded-none px-1 py-1 text-2xl no-underline",
+                                    isCurrent ? "font-bold text-foreground" : "text-muted-foreground hover:text-foreground",
+                                  )}
+                                >
+                                  {item.title}
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : (
+                        <p className="korean-display px-1 py-1 text-2xl text-muted-foreground">
+                          같은 카테고리 글이 아직 없습니다.
+                        </p>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              ) : null}
             </CardHeader>
             {post.thumbnailUrl ? (
               <CardContent className="pt-0">

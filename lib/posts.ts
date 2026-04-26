@@ -17,6 +17,7 @@ export type AdminPost = {
   contentMdx: string;
   tags: string[];
   status: PostStatus;
+  authorEmail: string | null;
   createdAt: string | null;
   updatedAt: string | null;
   publishedAt: string | null;
@@ -38,6 +39,7 @@ type PostRow = {
   content_mdx: string;
   tags: string[] | null;
   status: PostStatus;
+  author_email: string | null;
   created_at: string | null;
   updated_at: string | null;
   published_at: string | null;
@@ -66,6 +68,7 @@ function mapPost(row: PostRow): AdminPost {
     contentMdx: row.content_mdx,
     tags: row.tags ?? [],
     status: row.status,
+    authorEmail: row.author_email,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     publishedAt: row.published_at,
@@ -271,7 +274,7 @@ async function makeUniqueSlug(supabase: SupabaseQueryClient, baseSlug: string): 
 export async function listAdminPosts(supabase: SupabaseQueryClient, limit = 50): Promise<AdminPost[]> {
   const { data, error } = await supabase
     .from("posts")
-    .select("id, slug, title, summary, content_mdx, tags, status, created_at, updated_at, published_at, category, visibility, thumbnail_url")
+    .select("id, slug, title, summary, content_mdx, tags, status, author_email, created_at, updated_at, published_at, category, visibility, thumbnail_url")
     .order("updated_at", { ascending: false, nullsFirst: false })
     .limit(limit);
 
@@ -285,7 +288,7 @@ export async function listAdminPosts(supabase: SupabaseQueryClient, limit = 50):
 export async function listPublishedPosts(supabase: SupabaseQueryClient, limit = 50): Promise<AdminPost[]> {
   const { data, error } = await supabase
     .from("posts")
-    .select("id, slug, title, summary, content_mdx, tags, status, created_at, updated_at, published_at, category, visibility, thumbnail_url")
+    .select("id, slug, title, summary, content_mdx, tags, status, author_email, created_at, updated_at, published_at, category, visibility, thumbnail_url")
     .eq("status", "published")
     .eq("visibility", "public")
     .order("published_at", { ascending: false, nullsFirst: false })
@@ -337,7 +340,7 @@ export async function getPostBySlug(
   supabase: SupabaseQueryClient,
   slug: string,
 ): Promise<AdminPost | null> {
-  const selectFields = "id, slug, title, summary, content_mdx, tags, status, created_at, updated_at, published_at, category, visibility, thumbnail_url";
+  const selectFields = "id, slug, title, summary, content_mdx, tags, status, author_email, created_at, updated_at, published_at, category, visibility, thumbnail_url";
   const candidates = slugCandidates(slug);
 
   let data: PostRow | null = null;
