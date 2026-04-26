@@ -16,7 +16,7 @@ import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
 import { listActiveCategories } from "@/lib/categories";
 import { listPublishedCommentsByPostId } from "@/lib/comments";
 import { sharedCategoryGroups } from "@/lib/mock-data";
-import { getPublishedPostBySlug, listPublishedPosts } from "@/lib/posts";
+import { getPublishedPostBySlug, incrementPostView, listPublishedPosts } from "@/lib/posts";
 import { createPublicClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
@@ -145,6 +145,11 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
 
   const post = await getPublishedPostBySlug(supabase, slug);
   if (!post) notFound();
+  try {
+    await incrementPostView(supabase, post.id);
+  } catch {
+    // no-op: 조회수 집계 실패가 본문 렌더를 막지 않도록 한다.
+  }
 
   const publishedPosts = await listPublishedPosts(supabase, 200);
   const comments = await listPublishedCommentsByPostId(supabase, post.id);

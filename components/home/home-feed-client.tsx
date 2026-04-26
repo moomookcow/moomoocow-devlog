@@ -22,6 +22,7 @@ type HomePostCard = {
 
 type HomeFeedClientProps = {
   posts: HomePostCard[];
+  popularFeedItems: Array<{ id: string; label: string; href: string }>;
   recentCommentFeedItems: Array<{ id: string; label: string; href: string }>;
   initialQuery?: string;
   initialCategorySlug?: string;
@@ -30,6 +31,7 @@ type HomeFeedClientProps = {
 
 export default function HomeFeedClient({
   posts,
+  popularFeedItems,
   recentCommentFeedItems,
   initialQuery = "",
   initialCategorySlug = "",
@@ -57,16 +59,6 @@ export default function HomeFeedClient({
     });
   }, [lowerQuery, posts, selectedCategorySlug]);
 
-  const popularItems = useMemo(
-    () =>
-      posts.slice(0, 12).map((post) => ({
-        id: `popular-${post.slug}`,
-        label: post.title,
-        href: `/posts/${post.slug}`,
-      })),
-    [posts],
-  );
-
   const recentItems = useMemo(
     () =>
       posts.slice(0, 12).map((post) => ({
@@ -78,7 +70,13 @@ export default function HomeFeedClient({
   );
 
   const homeFeedSections = [
-    { title: "인기 글", items: popularItems },
+    {
+      title: "인기 글",
+      items:
+        popularFeedItems.length > 0
+          ? popularFeedItems
+          : [{ id: "popular-empty", label: "조회 데이터가 아직 없습니다." }],
+    },
     { title: "최근 글", items: recentItems },
     {
       title: "최근 댓글",

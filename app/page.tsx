@@ -3,7 +3,7 @@ import CategoryPanel from "@/components/shared/category-panel";
 import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
 import { listActiveCategories } from "@/lib/categories";
 import { listRecentPublishedComments } from "@/lib/comments";
-import { listPublishedPosts } from "@/lib/posts";
+import { listPublishedPosts, listTopPostViews } from "@/lib/posts";
 import { createPublicClient } from "@/lib/supabase/server";
 type HomePageProps = {
   searchParams?: Promise<{ q?: string; category?: string }>;
@@ -32,6 +32,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   let categoryGroups = [] as ReturnType<typeof buildCategoryPanelGroups>;
   let activeCategoryName = "";
   let recentCommentFeedItems = [] as Array<{ id: string; label: string; href: string }>;
+  let popularFeedItems = [] as Array<{ id: string; label: string; href: string }>;
 
   try {
     publishedPosts = await listPublishedPosts(supabase, 200);
@@ -68,6 +69,23 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   } catch {
     recentCommentFeedItems = [];
   }
+  try {
+    const topViews = await listTopPostViews(supabase, 12);
+    const postById = new Map(publishedPosts.map((post) => [post.id, post]));
+    popularFeedItems = topViews
+      .map((item) => {
+        const post = postById.get(item.postId);
+        if (!post) return null;
+        return {
+          id: `popular-view-${post.id}`,
+          label: `${post.title} · ${item.viewCount}`,
+          href: `/posts/${encodeURIComponent(post.slug)}`,
+        };
+      })
+      .filter((item): item is { id: string; label: string; href: string } => item !== null);
+  } catch {
+    popularFeedItems = [];
+  }
 
   const allVisiblePosts = publishedPosts.map((post) => ({
     slug: post.slug,
@@ -96,6 +114,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </aside>
         <HomeFeedClient
           posts={allVisiblePosts}
+          popularFeedItems={popularFeedItems}
           recentCommentFeedItems={recentCommentFeedItems}
           initialQuery={queryRaw}
           initialCategorySlug={selectedCategorySlug}

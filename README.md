@@ -38,7 +38,7 @@
 - [x] 상단 액션: 카테고리 관리/새 글/로그아웃
 - [x] 글 카드별 편집 버튼
 - [x] 우측 운영 패널: 최근 댓글 실제 데이터 연결
-- [x] 우측 운영 패널: 인기 글 실제 데이터 연결(현재는 발행 글 기준, `post_views` 연동 전)
+- [x] 우측 운영 패널: 인기 글 실제 데이터 연결(`post_views` 집계 기준)
 - [ ] 대시보드 로딩 스켈레톤
 
 ## 4) 카테고리 관리
@@ -75,7 +75,7 @@
 - [ ] `tags` 테이블
 - [ ] `post_tags` 조인 테이블
 - [x] `comments` 테이블(MVP)
-- [ ] `post_views` 집계 테이블
+- [x] `post_views` 집계 테이블(SQL/앱 연결 완료, SQL 적용 필요)
 - [x] slug unique 규칙
 - [x] draft/published 상태 규칙
 - [x] `post-thumbnails` Storage 버킷/정책 SQL 마련

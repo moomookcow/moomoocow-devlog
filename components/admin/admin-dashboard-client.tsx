@@ -23,6 +23,7 @@ type AdminPostCard = {
 type AdminDashboardClientProps = {
   posts: AdminPostCard[];
   postsError: boolean;
+  popularPostStats: Array<{ id: string; slug: string; title: string; viewCount: number }>;
   recentCommentFeedItems: Array<{ id: string; label: string; href: string }>;
   commentStats: {
     total: number;
@@ -45,6 +46,7 @@ function formatDate(value: string | null): string {
 export default function AdminDashboardClient({
   posts,
   postsError,
+  popularPostStats,
   recentCommentFeedItems,
   commentStats,
 }: AdminDashboardClientProps) {
@@ -58,23 +60,27 @@ export default function AdminDashboardClient({
 
   const publishedCount = posts.filter((post) => post.status === "published").length;
   const draftCount = posts.filter((post) => post.status === "draft").length;
-  const popularPosts = posts
-    .filter((post) => post.status === "published")
-    .slice(0, 5)
-    .map((post, index) => ({
-      rank: index + 1,
-      title: post.title,
-      slug: post.slug,
-      views: "-",
-    }));
+  const popularPosts = popularPostStats.slice(0, 5).map((item, index) => ({
+    rank: index + 1,
+    title: item.title,
+    slug: item.slug,
+    views: item.viewCount.toLocaleString("ko-KR"),
+  }));
   const popularFeedItems = posts
     .filter((post) => post.status === "published")
     .slice(0, 12)
     .map((post) => ({
-      id: `popular-${post.id}`,
+      id: `popular-fallback-${post.id}`,
       label: post.title,
       href: `/admin/posts/${encodeURIComponent(post.slug)}`,
     }));
+  const popularFeedItemsFromViews = popularPostStats.map((item) => ({
+    id: `popular-${item.id}`,
+    label: `${item.title} · ${item.viewCount.toLocaleString("ko-KR")}`,
+    href: `/admin/posts/${encodeURIComponent(item.slug)}`,
+  }));
+  const mergedPopularFeedItems =
+    popularFeedItemsFromViews.length > 0 ? popularFeedItemsFromViews : popularFeedItems;
   const recentFeedItems = posts.slice(0, 12).map((post) => ({
     id: `recent-${post.id}`,
     label: post.title,
@@ -84,8 +90,8 @@ export default function AdminDashboardClient({
     {
       title: "인기 글",
       items:
-        popularFeedItems.length > 0
-          ? popularFeedItems
+        mergedPopularFeedItems.length > 0
+          ? mergedPopularFeedItems
           : [{ id: "popular-empty", label: "발행 글이 아직 없습니다." }],
     },
     {
@@ -146,11 +152,11 @@ export default function AdminDashboardClient({
           <Card className="surface-panel rounded-none">
             <CardHeader>
               <CardTitle className="korean-display text-2xl">많이 조회한 글</CardTitle>
-              <CardDescription>조회수 테이블 연동 전까지는 발행 글 기준 임시 목록으로 표시됩니다.</CardDescription>
+              <CardDescription>실제 조회수 집계 기준 상위 글입니다.</CardDescription>
             </CardHeader>
             <CardContent>
               {popularPosts.length === 0 ? (
-                <p className="text-sm text-muted-foreground">발행 글이 없어 통계를 표시할 수 없습니다.</p>
+                <p className="text-sm text-muted-foreground">조회수가 아직 집계되지 않았습니다.</p>
               ) : (
                 <ul className="space-y-2">
                   {popularPosts.map((item) => (

@@ -4,6 +4,7 @@ import type { createClient } from "@/lib/supabase/server";
 
 type SupabaseQueryClient = {
   from: Awaited<ReturnType<typeof createClient>>["from"];
+  rpc: Awaited<ReturnType<typeof createClient>>["rpc"];
 };
 
 export type PostStatus = "draft" | "published";
@@ -22,6 +23,11 @@ export type AdminPost = {
   category: string | null;
   visibility: "public" | "private";
   thumbnailUrl: string | null;
+};
+
+export type PostViewStat = {
+  postId: string;
+  viewCount: number;
 };
 
 type PostRow = {
@@ -206,6 +212,40 @@ export async function listPublishedPosts(supabase: SupabaseQueryClient, limit = 
   }
 
   return (data ?? []).map((row) => mapPost(row as PostRow));
+}
+
+export async function listTopPostViews(
+  supabase: SupabaseQueryClient,
+  limit = 12,
+): Promise<PostViewStat[]> {
+  const { data, error } = await supabase
+    .from("post_views")
+    .select("post_id, view_count")
+    .order("view_count", { ascending: false, nullsFirst: false })
+    .order("updated_at", { ascending: false, nullsFirst: false })
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((row) => {
+    const current = row as { post_id: string; view_count: number | null };
+    return {
+      postId: current.post_id,
+      viewCount: Number(current.view_count ?? 0),
+    };
+  });
+}
+
+export async function incrementPostView(
+  supabase: SupabaseQueryClient,
+  postId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("increment_post_view", { p_post_id: postId });
+  if (error) {
+    throw error;
+  }
 }
 
 export async function getPostBySlug(

@@ -5,7 +5,7 @@ import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
 import { listActiveCategories } from "@/lib/categories";
 import { getPublishedCommentStats, listRecentPublishedComments } from "@/lib/comments";
 import { sharedCategoryGroups } from "@/lib/mock-data";
-import { listAdminPosts } from "@/lib/posts";
+import { listAdminPosts, listTopPostViews } from "@/lib/posts";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +18,7 @@ export default async function AdminPage() {
   let posts = [] as Awaited<ReturnType<typeof listAdminPosts>>;
   let categoryGroups = sharedCategoryGroups;
   let recentComments = [] as Awaited<ReturnType<typeof listRecentPublishedComments>>;
+  let topViewStats = [] as Awaited<ReturnType<typeof listTopPostViews>>;
   let commentStats = {
     total: 0,
     recent7d: 0,
@@ -45,8 +46,27 @@ export default async function AdminPage() {
     recentComments = [];
     commentStats = { total: 0, recent7d: 0, pendingReply: 0 };
   }
+  try {
+    topViewStats = await listTopPostViews(supabase, 12);
+  } catch {
+    topViewStats = [];
+  }
 
   const postById = new Map(posts.map((post) => [post.id, post]));
+  const popularPostStats = topViewStats
+    .map((item) => {
+      const post = postById.get(item.postId);
+      if (!post) return null;
+      return {
+        id: post.id,
+        slug: post.slug,
+        title: post.title,
+        viewCount: item.viewCount,
+      };
+    })
+    .filter(
+      (item): item is { id: string; slug: string; title: string; viewCount: number } => item !== null,
+    );
   const recentCommentFeedItems = recentComments
     .map((comment) => {
       const post = postById.get(comment.postId);
@@ -83,6 +103,7 @@ export default async function AdminPage() {
             thumbnailUrl: post.thumbnailUrl,
           }))}
           postsError={postsError}
+          popularPostStats={popularPostStats}
           recentCommentFeedItems={recentCommentFeedItems}
           commentStats={commentStats}
         />
