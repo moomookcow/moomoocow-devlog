@@ -25,6 +25,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
+  verification: {
+    google: "5abDZSxqXKuKNEX3DpMsY0FLJDAxPBL-tJ2zGbm_Orw",
+  },
   title: {
     default: "Moomoocow Devlog",
     template: "%s | Moomoocow Devlog",
