@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import NextImage from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { cache, Suspense, type ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -39,10 +40,20 @@ const COMMENT_ERROR_MESSAGE: Record<string, string> = {
   post_not_found: "게시글을 찾을 수 없습니다.",
 };
 
-const getPublishedPostBySlugCached = cache(async (slug: string) => {
+const getPublishedPostBySlugCached = unstable_cache(async (slug: string) => {
   const supabase = createPublicClient();
   return getPublishedPostBySlug(supabase, slug);
-});
+}, ["public-post-by-slug"], { revalidate });
+
+const getPublishedPostSummariesCached = unstable_cache(async (limit: number) => {
+  const supabase = createPublicClient();
+  return listPublishedPostSummaries(supabase, limit);
+}, ["public-post-summaries"], { revalidate });
+
+const getActiveCategoriesCached = unstable_cache(async (limit: number) => {
+  const supabase = createPublicClient();
+  return listActiveCategories(supabase, limit);
+}, ["public-active-categories"], { revalidate });
 
 export async function generateMetadata({ params }: Pick<PublicPostPageProps, "params">): Promise<Metadata> {
   const { slug } = await params;
@@ -210,8 +221,8 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
   });
 
   const [publishedPosts, categories] = await Promise.all([
-    listPublishedPostSummaries(supabase, 200),
-    listActiveCategories(supabase, 200).catch(() => null),
+    getPublishedPostSummariesCached(80),
+    getActiveCategoriesCached(120).catch(() => null),
   ]);
 
   let categoryGroups = sharedCategoryGroups;
