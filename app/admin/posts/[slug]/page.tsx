@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireAdminOrRedirect } from "@/lib/admin-auth";
+import { deletePostAction } from "@/app/admin/actions";
 import { getPostBySlug, listAdminPosts } from "@/lib/posts";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
@@ -20,7 +21,7 @@ export const dynamic = "force-dynamic";
 
 type AdminPostDetailPageProps = {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ success?: string }>;
+  searchParams?: Promise<{ success?: string; error?: string }>;
 };
 
 const SUCCESS_MESSAGE: Record<string, string> = {
@@ -28,6 +29,13 @@ const SUCCESS_MESSAGE: Record<string, string> = {
   published: "출간이 완료되었습니다.",
   updated_draft: "임시저장 수정이 완료되었습니다.",
   updated_published: "출간 글 수정이 완료되었습니다.",
+};
+const ERROR_MESSAGE: Record<string, string> = {
+  delete_confirm_mismatch: "확인 제목이 일치하지 않습니다. 게시글 제목을 정확히 입력해주세요.",
+  delete_not_found: "삭제할 게시글을 찾지 못했습니다.",
+  delete_forbidden: "게시글 삭제 권한이 없습니다.",
+  delete_table_missing: "삭제에 필요한 테이블이 없어 삭제를 완료하지 못했습니다.",
+  delete_failed: "게시글 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.",
 };
 const SUPABASE_STORAGE_PUBLIC_PATH = "/storage/v1/object/public/post-thumbnails/";
 
@@ -144,6 +152,7 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
 
   const query = searchParams ? await searchParams : undefined;
   const successMessage = query?.success ? SUCCESS_MESSAGE[query.success] : null;
+  const errorMessage = query?.error ? ERROR_MESSAGE[query.error] : null;
   const headingRenderers = createHeadingRenderers();
 
   return (
@@ -171,6 +180,11 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
           {successMessage}
         </p>
       ) : null}
+      {errorMessage ? (
+        <p className="text-sm text-destructive" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="min-w-0 space-y-4">
@@ -193,6 +207,30 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
                   </Link>
                 </div>
               </div>
+              <form action={deletePostAction} className="grid gap-2 border-t border-border/60 pt-3 sm:max-w-md">
+                <input type="hidden" name="slug" value={post.slug} />
+                <label htmlFor="confirmTitle" className="korean-display text-sm text-muted-foreground">
+                  삭제 확인: 아래 입력칸에 게시글 제목을 정확히 입력하세요.
+                </label>
+                <input
+                  id="confirmTitle"
+                  name="confirmTitle"
+                  type="text"
+                  required
+                  autoComplete="off"
+                  className="h-9 w-full border border-border bg-background px-2 text-sm"
+                  placeholder={post.title}
+                />
+                <button
+                  type="submit"
+                  className={cn(
+                    buttonVariants({ variant: "destructive" }),
+                    "h-9 w-full rounded-md px-4",
+                  )}
+                >
+                  게시글 삭제
+                </button>
+              </form>
               <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
                 <Badge variant="outline">{post.status.toUpperCase()}</Badge>
                 <span className="korean-display font-medium text-foreground">{authorName}</span>

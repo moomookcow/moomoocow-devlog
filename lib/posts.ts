@@ -155,6 +155,11 @@ function isMissingTagTablesError(error: unknown): boolean {
   return code === "PGRST205" || code === "42P01";
 }
 
+function isMissingTableError(error: unknown): boolean {
+  const code = (error as { code?: string })?.code;
+  return code === "PGRST205" || code === "42P01";
+}
+
 function normalizeTagSlug(tag: string): string {
   return normalizeSlugInput(tag);
 }
@@ -661,4 +666,33 @@ export async function updatePostBySlug(
   await syncPostTagRelations(supabase, updated.id, normalizedTags);
 
   return updated;
+}
+
+export async function deletePostBySlug(
+  supabase: SupabaseQueryClient,
+  slug: string,
+): Promise<{ id: string; slug: string } | null> {
+  const target = await getPostBySlug(supabase, slug);
+  if (!target) return null;
+
+  const postId = target.id;
+
+  const deleteIfExists = async (table: string, column: string, value: string) => {
+    const result = await supabase.from(table).delete().eq(column, value);
+    if (result.error && !isMissingTableError(result.error)) {
+      throw result.error;
+    }
+  };
+
+  await deleteIfExists("post_tags", "post_id", postId);
+  await deleteIfExists("post_views", "post_id", postId);
+  await deleteIfExists("comments", "post_id", postId);
+  await deleteIfExists("post_slug_aliases", "post_id", postId);
+
+  const postDeleteResult = await supabase.from("posts").delete().eq("id", postId);
+  if (postDeleteResult.error) {
+    throw postDeleteResult.error;
+  }
+
+  return { id: postId, slug: target.slug };
 }

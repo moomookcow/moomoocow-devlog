@@ -1,9 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 import { requireAdminOrRedirect } from "@/lib/admin-auth";
-import { createPost, updatePostBySlug } from "@/lib/posts";
+import { createPost, deletePostBySlug, getPostBySlug, updatePostBySlug } from "@/lib/posts";
 import { generateSummaryFromMarkdown, sanitizeSummaryText } from "@/lib/summary";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 
@@ -151,4 +152,47 @@ export async function createPostAction(formData: FormData) {
   }
 
   redirect(`/admin/posts/${encodeURIComponent(created.slug)}?success=${editingSlug ? "updated_draft" : "draft"}`);
+}
+
+export async function deletePostAction(formData: FormData) {
+  const supabase = await createClient();
+  await requireAdminOrRedirect(supabase, "/admin");
+  const adminClient = createAdminClient();
+  const writeClient = adminClient ?? supabase;
+
+  const slug = String(formData.get("slug") ?? "").trim();
+  const confirmTitle = String(formData.get("confirmTitle") ?? "").trim();
+
+  if (!slug) {
+    redirect("/admin?error=delete_failed");
+  }
+
+  try {
+    const target = await getPostBySlug(writeClient, slug);
+    if (!target) {
+      redirect(`/admin/posts/${encodeURIComponent(slug)}?error=delete_not_found`);
+    }
+    if (confirmTitle !== target.title.trim()) {
+      redirect(`/admin/posts/${encodeURIComponent(slug)}?error=delete_confirm_mismatch`);
+    }
+
+    const deleted = await deletePostBySlug(writeClient, slug);
+    if (!deleted) {
+      redirect(`/admin/posts/${encodeURIComponent(slug)}?error=delete_not_found`);
+    }
+  } catch (error) {
+    const code = (error as { code?: string })?.code ?? "";
+    if (code === "42501") {
+      redirect(`/admin/posts/${encodeURIComponent(slug)}?error=delete_forbidden`);
+    }
+    if (code === "42P01" || code === "PGRST205") {
+      redirect(`/admin/posts/${encodeURIComponent(slug)}?error=delete_table_missing`);
+    }
+    redirect(`/admin/posts/${encodeURIComponent(slug)}?error=delete_failed`);
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath("/sitemap.xml");
+  redirect("/admin?success=deleted");
 }

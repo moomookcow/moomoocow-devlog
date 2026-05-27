@@ -191,11 +191,11 @@
 - [ ] Epic F: prefetch/cache/revalidate 정책 정리
 - [ ] Epic F 완료
 
-- [ ] Epic G(게시글 삭제) 착수
-- [ ] Epic G: 관리자 삭제 액션 추가
-- [ ] Epic G: 삭제 Confirm UX 추가
-- [ ] Epic G: 연관 데이터 정합성 점검(댓글/조회수/slug alias)
-- [ ] Epic G 완료
+- [x] Epic G(게시글 삭제) 착수
+- [x] Epic G: 관리자 삭제 액션 추가
+- [x] Epic G: 삭제 Confirm UX 추가
+- [x] Epic G: 연관 데이터 정합성 점검(댓글/조회수/slug alias)
+- [x] Epic G 완료
 
 - [ ] Epic C(댓글 안전장치) 착수
 - [ ] Epic C: rate limiting 1차 적용

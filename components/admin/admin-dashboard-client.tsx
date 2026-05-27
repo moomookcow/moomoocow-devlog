@@ -112,7 +112,7 @@ export default function AdminDashboardClient({
   ];
 
   return (
-    <>
+    <div className="space-y-3">
       <section className="min-w-0 space-y-3">
         <Card className="surface-panel rounded-none">
           <CardHeader className="gap-3 sm:flex sm:flex-row sm:items-start sm:justify-between">
@@ -291,6 +291,6 @@ export default function AdminDashboardClient({
           sections={adminFeedSections}
         />
       </aside>
-    </>
+    </div>
   );
 }

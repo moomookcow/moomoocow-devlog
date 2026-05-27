@@ -10,9 +10,23 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPage() {
+type AdminPageProps = {
+  searchParams?: Promise<{ success?: string; error?: string }>;
+};
+
+const ADMIN_SUCCESS_MESSAGE: Record<string, string> = {
+  deleted: "게시글을 삭제했습니다.",
+};
+const ADMIN_ERROR_MESSAGE: Record<string, string> = {
+  delete_failed: "게시글 삭제에 실패했습니다.",
+};
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
   const supabase = await createClient();
   await requireAdminOrRedirect(supabase, "/admin");
+  const query = searchParams ? await searchParams : undefined;
+  const successMessage = query?.success ? ADMIN_SUCCESS_MESSAGE[query.success] : null;
+  const errorMessage = query?.error ? ADMIN_ERROR_MESSAGE[query.error] : null;
 
   let postsError = false;
   let posts = [] as Awaited<ReturnType<typeof listAdminPosts>>;
@@ -87,6 +101,16 @@ export default async function AdminPage() {
         <h1 className="korean-display break-words text-5xl leading-[0.95] sm:text-7xl">Admin Workspace</h1>
         <p className="korean-display mt-3 text-xl text-foreground/90 sm:text-2xl">글 운영, 통계, 워크플로우를 한 화면에서 관리합니다.</p>
       </section>
+      {successMessage ? (
+        <p className="mb-3 text-sm text-foreground" role="status">
+          {successMessage}
+        </p>
+      ) : null}
+      {errorMessage ? (
+        <p className="mb-3 text-sm text-destructive" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
         <aside className="min-w-0 self-start space-y-4">
