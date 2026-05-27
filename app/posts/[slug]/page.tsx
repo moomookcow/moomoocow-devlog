@@ -170,6 +170,7 @@ function MarkdownImage({ src, alt }: { src?: string | Blob; alt?: string }) {
           width={1600}
           height={900}
           sizes="(max-width: 1024px) 100vw, 70vw"
+          quality={60}
           className="h-auto w-full object-contain"
         />
       </span>
@@ -263,7 +264,8 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
               src={post.thumbnailUrl}
               alt=""
               fill
-              sizes="100vw"
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 85vw, 60vw"
+              quality={50}
               className="object-cover opacity-68 blur-0"
             />
             <div className="absolute inset-0 bg-background/46" />
