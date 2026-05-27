@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { listPublishedPosts, normalizeSlugInput } from "@/lib/posts";
+import { listPublishedPostSummaries, normalizeSlugInput } from "@/lib/posts";
 import { getSiteUrl } from "@/lib/site";
 import { createPublicClient } from "@/lib/supabase/server";
 
@@ -8,9 +8,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
   const supabase = createPublicClient();
 
-  let publishedPosts = [] as Awaited<ReturnType<typeof listPublishedPosts>>;
+  let publishedPosts = [] as Awaited<ReturnType<typeof listPublishedPostSummaries>>;
   try {
-    publishedPosts = await listPublishedPosts(supabase, 2000);
+    publishedPosts = await listPublishedPostSummaries(supabase, 2000);
   } catch {
     publishedPosts = [];
   }

@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
 import { listActiveCategories } from "@/lib/categories";
 import { sharedCategoryGroups } from "@/lib/mock-data";
-import { getPublishedPostBySlug, incrementPostView, listPublishedPosts, normalizeSlugInput } from "@/lib/posts";
+import { getPublishedPostBySlug, incrementPostView, listPublishedPostSummaries, normalizeSlugInput } from "@/lib/posts";
 import { createPublicClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
@@ -210,7 +210,7 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
   });
 
   const [publishedPosts, categories] = await Promise.all([
-    listPublishedPosts(supabase, 200),
+    listPublishedPostSummaries(supabase, 200),
     listActiveCategories(supabase, 200).catch(() => null),
   ]);
 

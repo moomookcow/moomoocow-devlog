@@ -5,7 +5,7 @@ import CategoryPanel from "@/components/shared/category-panel";
 import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
 import { listActiveCategories } from "@/lib/categories";
 import { listRecentPublishedComments } from "@/lib/comments";
-import { listPublishedPosts, listTopPostViews } from "@/lib/posts";
+import { listPublishedPostSummaries, listTopPostViews } from "@/lib/posts";
 import { createPublicClient } from "@/lib/supabase/server";
 type HomePageProps = {
   searchParams?: Promise<{ q?: string; tag?: string }>;
@@ -37,14 +37,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const selectedTagSlug = (params?.tag ?? "").trim();
 
   const supabase = createPublicClient();
-  let publishedPosts = [] as Awaited<ReturnType<typeof listPublishedPosts>>;
+  let publishedPosts = [] as Awaited<ReturnType<typeof listPublishedPostSummaries>>;
   let categoryGroups = [] as ReturnType<typeof buildCategoryPanelGroups>;
   const activeTagName = "";
   let recentCommentFeedItems = [] as Array<{ id: string; label: string; href: string }>;
   let popularFeedItems = [] as Array<{ id: string; label: string; href: string }>;
 
   try {
-    publishedPosts = await listPublishedPosts(supabase, 200);
+    publishedPosts = await listPublishedPostSummaries(supabase, 200);
   } catch {
     publishedPosts = [];
   }

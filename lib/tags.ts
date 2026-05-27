@@ -1,5 +1,5 @@
 import type { createClient } from "@/lib/supabase/server";
-import { listPublishedPosts, normalizeSlugInput, type AdminPost } from "@/lib/posts";
+import { listPublishedPostSummaries, normalizeSlugInput, type AdminPost } from "@/lib/posts";
 
 type SupabaseQueryClient = {
   from: Awaited<ReturnType<typeof createClient>>["from"];
@@ -56,7 +56,7 @@ export async function getTagLabelBySlug(
 
   if (tagResult.error) {
     if (isMissingTagTablesError(tagResult.error)) {
-      const posts = await listPublishedPosts(supabase, 300);
+      const posts = await listPublishedPostSummaries(supabase, 300);
       const matched = filterPostsByTagSlug(posts, normalized);
       const firstTag = matched
         .flatMap((post) => post.tags ?? [])
@@ -78,7 +78,7 @@ export async function listPublishedPostsByTagSlug(
   const normalized = normalizeSlugInput(decodedTagSlug);
   if (!normalized) return [];
   const fallbackByPostTags = async () => {
-    const allPublished = await listPublishedPosts(supabase, limit * 2);
+    const allPublished = await listPublishedPostSummaries(supabase, limit * 2);
     return filterPostsByTagSlug(allPublished, normalized).slice(0, limit);
   };
 
@@ -117,7 +117,7 @@ export async function listPublishedPostsByTagSlug(
 
   const postsResult = await supabase
     .from("posts")
-    .select("id, slug, title, summary, content_mdx, tags, status, author_email, created_at, updated_at, published_at, category, visibility, thumbnail_url")
+    .select("id, slug, title, summary, tags, status, author_email, created_at, updated_at, published_at, category, visibility, thumbnail_url")
     .in("id", postIds)
     .eq("status", "published")
     .eq("visibility", "public")
@@ -134,7 +134,7 @@ export async function listPublishedPostsByTagSlug(
     slug: String((row as { slug: string }).slug),
     title: String((row as { title: string }).title),
     summary: ((row as { summary: string | null }).summary ?? null),
-    contentMdx: String((row as { content_mdx: string }).content_mdx),
+    contentMdx: "",
     tags: (((row as { tags: string[] | null }).tags) ?? []),
     status: "published" as const,
     authorEmail: ((row as { author_email: string | null }).author_email ?? null),

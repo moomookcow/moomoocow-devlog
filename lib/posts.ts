@@ -26,6 +26,11 @@ export type AdminPost = {
   thumbnailUrl: string | null;
 };
 
+const POST_SELECT_FIELDS =
+  "id, slug, title, summary, content_mdx, tags, status, author_email, created_at, updated_at, published_at, category, visibility, thumbnail_url";
+const POST_LIST_SELECT_FIELDS =
+  "id, slug, title, summary, tags, status, author_email, created_at, updated_at, published_at, category, visibility, thumbnail_url";
+
 export type PostViewStat = {
   postId: string;
   viewCount: number;
@@ -66,6 +71,27 @@ function mapPost(row: PostRow): AdminPost {
     title: row.title,
     summary: row.summary,
     contentMdx: row.content_mdx,
+    tags: row.tags ?? [],
+    status: row.status,
+    authorEmail: row.author_email,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    publishedAt: row.published_at,
+    category: row.category,
+    visibility: row.visibility ?? "public",
+    thumbnailUrl: row.thumbnail_url,
+  };
+}
+
+type PostListRow = Omit<PostRow, "content_mdx">;
+
+function mapPostListRow(row: PostListRow): AdminPost {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    summary: row.summary,
+    contentMdx: "",
     tags: row.tags ?? [],
     status: row.status,
     authorEmail: row.author_email,
@@ -274,7 +300,7 @@ async function makeUniqueSlug(supabase: SupabaseQueryClient, baseSlug: string): 
 export async function listAdminPosts(supabase: SupabaseQueryClient, limit = 50): Promise<AdminPost[]> {
   const { data, error } = await supabase
     .from("posts")
-    .select("id, slug, title, summary, content_mdx, tags, status, author_email, created_at, updated_at, published_at, category, visibility, thumbnail_url")
+    .select(POST_SELECT_FIELDS)
     .order("updated_at", { ascending: false, nullsFirst: false })
     .limit(limit);
 
@@ -288,7 +314,7 @@ export async function listAdminPosts(supabase: SupabaseQueryClient, limit = 50):
 export async function listPublishedPosts(supabase: SupabaseQueryClient, limit = 50): Promise<AdminPost[]> {
   const { data, error } = await supabase
     .from("posts")
-    .select("id, slug, title, summary, content_mdx, tags, status, author_email, created_at, updated_at, published_at, category, visibility, thumbnail_url")
+    .select(POST_SELECT_FIELDS)
     .eq("status", "published")
     .eq("visibility", "public")
     .order("published_at", { ascending: false, nullsFirst: false })
@@ -300,6 +326,26 @@ export async function listPublishedPosts(supabase: SupabaseQueryClient, limit = 
   }
 
   return (data ?? []).map((row) => mapPost(row as PostRow));
+}
+
+export async function listPublishedPostSummaries(
+  supabase: SupabaseQueryClient,
+  limit = 50,
+): Promise<AdminPost[]> {
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_LIST_SELECT_FIELDS)
+    .eq("status", "published")
+    .eq("visibility", "public")
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("updated_at", { ascending: false, nullsFirst: false })
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((row) => mapPostListRow(row as PostListRow));
 }
 
 export async function listTopPostViews(
@@ -340,7 +386,7 @@ export async function getPostBySlug(
   supabase: SupabaseQueryClient,
   slug: string,
 ): Promise<AdminPost | null> {
-  const selectFields = "id, slug, title, summary, content_mdx, tags, status, author_email, created_at, updated_at, published_at, category, visibility, thumbnail_url";
+  const selectFields = POST_SELECT_FIELDS;
   const candidates = slugCandidates(slug);
 
   let data: PostRow | null = null;

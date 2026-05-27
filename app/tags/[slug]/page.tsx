@@ -8,7 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
 import { listActiveCategories } from "@/lib/categories";
 import { listRecentPublishedComments } from "@/lib/comments";
-import { listPublishedPosts, listTopPostViews } from "@/lib/posts";
+import { listPublishedPostSummaries, listTopPostViews } from "@/lib/posts";
 import { createPublicClient } from "@/lib/supabase/server";
 import { getTagLabelBySlug, listPublishedPostsByTagSlug } from "@/lib/tags";
 import { cn } from "@/lib/utils";
@@ -69,7 +69,7 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
 
   const [tagLabel, allPublishedPosts, categories, topViews, recentComments] = await Promise.all([
     getTagLabelBySlug(supabase, slug),
-    listPublishedPosts(supabase, 300),
+    listPublishedPostSummaries(supabase, 300),
     listActiveCategories(supabase, 200).catch(() => []),
     listTopPostViews(supabase, 20).catch(() => []),
     listRecentPublishedComments(supabase, 24).catch(() => []),
