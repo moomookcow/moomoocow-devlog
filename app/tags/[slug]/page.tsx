@@ -13,7 +13,7 @@ import { createPublicClient } from "@/lib/supabase/server";
 import { getTagLabelBySlug, listPublishedPostsByTagSlug } from "@/lib/tags";
 import { cn } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 type TagPageProps = {
   params: Promise<{ slug: string }>;

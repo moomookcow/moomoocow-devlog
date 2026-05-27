@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import NextImage from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense, type ReactNode } from "react";
+import { cache, Suspense, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -39,10 +39,14 @@ const COMMENT_ERROR_MESSAGE: Record<string, string> = {
   post_not_found: "게시글을 찾을 수 없습니다.",
 };
 
+const getPublishedPostBySlugCached = cache(async (slug: string) => {
+  const supabase = createPublicClient();
+  return getPublishedPostBySlug(supabase, slug);
+});
+
 export async function generateMetadata({ params }: Pick<PublicPostPageProps, "params">): Promise<Metadata> {
   const { slug } = await params;
-  const supabase = createPublicClient();
-  const post = await getPublishedPostBySlug(supabase, slug);
+  const post = await getPublishedPostBySlugCached(slug);
   const canonical = `/posts/${encodeURIComponent(slug)}`;
 
   if (!post) {
@@ -199,7 +203,7 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
   const commentSuccess = search?.comment_success === "1";
   const shouldJumpToBottom = search?.jump === "bottom";
 
-  const post = await getPublishedPostBySlug(supabase, slug);
+  const post = await getPublishedPostBySlugCached(slug);
   if (!post) notFound();
   void incrementPostView(supabase, post.id).catch(() => {
     // no-op: 조회수 집계 실패가 본문 렌더를 막지 않도록 한다.

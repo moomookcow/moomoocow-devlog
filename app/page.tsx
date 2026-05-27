@@ -11,7 +11,7 @@ type HomePageProps = {
   searchParams?: Promise<{ q?: string; tag?: string }>;
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 export const metadata: Metadata = {
   title: "홈",
   description: "최신 기술 글, 인기 글, 최근 댓글을 한 번에 보는 개발 블로그 홈",
