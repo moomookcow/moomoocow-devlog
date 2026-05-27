@@ -179,12 +179,12 @@
 - [x] Epic E: 관리자 핵심 화면 모바일 점검/수정
 - [x] Epic E 완료
 
-- [ ] Epic B(SEO) 착수
-- [ ] Epic B: 페이지별 metadata 정리
-- [ ] Epic B: `sitemap.ts` 추가
-- [ ] Epic B: `robots.ts` 추가
-- [ ] Epic B: canonical URL 전략 반영
-- [ ] Epic B 완료
+- [x] Epic B(SEO) 착수
+- [x] Epic B: 페이지별 metadata 정리
+- [x] Epic B: `sitemap.ts` 추가
+- [x] Epic B: `robots.ts` 추가
+- [x] Epic B: canonical URL 전략 반영
+- [x] Epic B 완료
 
 - [ ] Epic F(캐시/재방문 성능) 착수
 - [ ] Epic F: 게시글 재방문 시 로딩 개선(캐시/재요청 최소화)
@@ -208,10 +208,10 @@
 - [ ] Epic D: 핵심 흐름 테스트(로그인->작성->출간->조회) 구성/통과
 - [ ] Epic D 완료
 
-- [ ] Epic H(구글 서치 콘솔 연동, 최종) 착수
-- [ ] Epic H: Search Console 소유권 인증
-- [ ] Epic H: 사이트맵 제출 및 읽기 성공 확인
-- [ ] Epic H: 핵심 페이지 인덱싱 요청/상태 확인
-- [ ] Epic H 완료
+- [x] Epic H(구글 서치 콘솔 연동, 최종) 착수
+- [x] Epic H: Search Console 소유권 인증
+- [x] Epic H: 사이트맵 제출 및 읽기 성공 확인
+- [x] Epic H: 핵심 페이지 인덱싱 요청/상태 확인
+- [x] Epic H 완료
 
 - [ ] 전체 마감: DoD 충족 확인
