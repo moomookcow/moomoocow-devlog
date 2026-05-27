@@ -6,6 +6,7 @@ import LoginForm from "@/components/admin/login-form";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { isAdminAllowed } from "@/lib/admin";
+import { normalizeNextPath } from "@/lib/auth-redirect";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
@@ -23,8 +24,7 @@ const ERROR_MESSAGE: Record<string, string> = {
 
 export default async function AdminLoginPage({ searchParams }: AdminLoginPageProps) {
   const params = searchParams ? await searchParams : undefined;
-  const next = params?.next ?? "/admin";
-  const safeNext = next.startsWith("/") ? next : "/admin";
+  const safeNext = normalizeNextPath(params?.next);
   const errorKey = params?.error;
   const errorMessage = errorKey ? ERROR_MESSAGE[errorKey] ?? "로그인 중 오류가 발생했습니다." : null;
   const supabase = await createClient();

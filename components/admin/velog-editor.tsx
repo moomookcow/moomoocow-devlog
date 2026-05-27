@@ -122,6 +122,16 @@ function readNodeText(node: ReactNode): string {
   return "";
 }
 
+function getStableHeadingNodeSuffix(node: unknown): string {
+  const position = (node as { position?: { start?: { offset?: number; line?: number; column?: number } } })?.position;
+  const offset = position?.start?.offset;
+  if (typeof offset === "number") return String(offset);
+  const line = position?.start?.line;
+  const column = position?.start?.column;
+  if (typeof line === "number" && typeof column === "number") return `${line}-${column}`;
+  return "0";
+}
+
 function MarkdownImage({ src, alt }: { src?: string | Blob; alt?: string }) {
   if (!src || typeof src !== "string") return null;
 
@@ -227,15 +237,19 @@ export default function VelogEditor({ action, initialPost, categoryOptions = DEF
     return merged.join(",");
   }, [tagInput, tags]);
 
-  const previewMarkdownComponents = useMemo(() => {
-    const used = new Map<string, number>();
+  const previewMarkdownComponents = (() => {
     const createHeading = (tag: "h1" | "h2" | "h3", fallback: string) => {
-      return function HeadingRenderer({ children }: { children?: ReactNode }) {
+      return function HeadingRenderer({
+        children,
+        node,
+      }: {
+        children?: ReactNode;
+        node?: unknown;
+      }) {
         const text = readNodeText(children).trim();
         const base = slugifyHeading(text) || fallback;
-        const count = (used.get(base) ?? 0) + 1;
-        used.set(base, count);
-        const id = count === 1 ? base : `${base}-${count}`;
+        const suffix = getStableHeadingNodeSuffix(node);
+        const id = `${base}-${suffix}`;
         if (tag === "h1") return <h1 id={id}>{children}</h1>;
         if (tag === "h2") return <h2 id={id}>{children}</h2>;
         return <h3 id={id}>{children}</h3>;
@@ -248,7 +262,7 @@ export default function VelogEditor({ action, initialPost, categoryOptions = DEF
       h2: createHeading("h2", "h2"),
       h3: createHeading("h3", "h3"),
     };
-  }, [content]);
+  })();
 
   useEffect(() => {
     const el = contentRef.current;

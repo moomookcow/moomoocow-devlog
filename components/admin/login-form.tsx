@@ -1,22 +1,22 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import { normalizeNextPath } from "@/lib/auth-redirect";
 
 type LoginFormProps = {
   nextPath?: string;
 };
 
 export default function LoginForm({ nextPath = "/admin" }: LoginFormProps) {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const safeNextPath = normalizeNextPath(nextPath);
 
   async function onSignInWithPassword(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,8 +35,7 @@ export default function LoginForm({ nextPath = "/admin" }: LoginFormProps) {
       return;
     }
 
-    router.replace(nextPath);
-    router.refresh();
+    window.location.assign(safeNextPath);
   }
 
   return (

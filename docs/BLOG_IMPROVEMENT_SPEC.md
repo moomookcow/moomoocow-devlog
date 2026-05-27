@@ -167,10 +167,10 @@
 - 2026-05-27: 구글 서치 콘솔 연동 항목 추가(최종 단계로 배치)
 
 ## 10. 실행 TODO 체크리스트
-- [ ] Epic A(인증/인가) 착수
-- [ ] Epic A: `/admin/login -> /admin -> /admin/new` 정상 흐름 검증
-- [ ] Epic A: 비인가 접근 차단/리다이렉트 일관성 검증
-- [ ] Epic A 완료
+- [x] Epic A(인증/인가) 착수
+- [x] Epic A: `/admin/login -> /admin -> /admin/new` 정상 흐름 검증
+- [x] Epic A: 비인가 접근 차단/리다이렉트 일관성 검증
+- [x] Epic A 완료
 
 - [ ] Epic E(모바일 반응형) 착수
 - [ ] Epic E: 홈(`/`) 모바일 레이아웃 점검/수정

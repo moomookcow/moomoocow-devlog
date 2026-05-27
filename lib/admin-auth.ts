@@ -2,6 +2,7 @@ import type { User } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 
 import { isAdminAllowed } from "@/lib/admin";
+import { buildAdminLoginUrl } from "@/lib/auth-redirect";
 import type { createClient } from "@/lib/supabase/server";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
@@ -20,7 +21,7 @@ export async function requireAdminOrRedirect(
   const user = directUser ?? session?.user ?? null;
 
   if (!user) {
-    redirect(`/admin/login?next=${encodeURIComponent(nextPath)}`);
+    redirect(buildAdminLoginUrl(undefined, nextPath));
   }
 
   if (!isAdminAllowed(user)) {
@@ -29,7 +30,7 @@ export async function requireAdminOrRedirect(
     } catch {
       // noop
     }
-    redirect("/admin/login?error=forbidden");
+    redirect(buildAdminLoginUrl("forbidden", nextPath));
   }
 
   return user;
