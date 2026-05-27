@@ -136,7 +136,7 @@ export default function HomeFeedClient({
   return (
     <>
       <section className="space-y-3 overflow-x-hidden">
-        <div className="surface-subtle flex min-w-0 flex-wrap items-center gap-2 px-3 py-2">
+        <div className="surface-subtle bg-card/90 flex min-w-0 flex-wrap items-center gap-2 border-border/80 px-3 py-2">
           <button
             type="button"
             onClick={() => {
@@ -144,7 +144,7 @@ export default function HomeFeedClient({
               setActiveTagName("");
             }}
             className={cn(
-              "korean-display inline-flex cursor-pointer items-center rounded-none border px-2 py-1 text-sm hover:opacity-85",
+              "korean-display inline-flex cursor-pointer items-center rounded-none border bg-muted/55 px-2 py-1 text-sm hover:opacity-85",
               !selectedTagSlug ? "border-primary bg-primary text-primary-foreground" : "border-border/60",
             )}
           >
@@ -159,7 +159,7 @@ export default function HomeFeedClient({
                 setActiveTagName(tag.label);
               }}
               className={cn(
-                "korean-display inline-flex max-w-[10rem] cursor-pointer items-center rounded-none border px-2 py-1 text-sm hover:opacity-85 sm:max-w-none",
+                "korean-display inline-flex max-w-[10rem] cursor-pointer items-center rounded-none border bg-muted/55 px-2 py-1 text-sm hover:opacity-85 sm:max-w-none",
                 selectedTagSlug === tag.slug ? "border-primary bg-primary text-primary-foreground" : "border-border/60",
               )}
             >
@@ -179,7 +179,7 @@ export default function HomeFeedClient({
                 setActiveTagName("");
                 setQuery("");
               }}
-              className="ml-auto inline-flex cursor-pointer items-center gap-1 border border-border/60 px-2 py-1 text-xs hover:opacity-85"
+              className="inline-flex w-full cursor-pointer items-center justify-center gap-1 border border-border/60 px-2 py-1 text-xs hover:opacity-85 sm:ml-auto sm:w-auto"
             >
               <X className="h-3.5 w-3.5" />
               필터 초기화
@@ -210,9 +210,9 @@ export default function HomeFeedClient({
                 router.push(`/posts/${post.slug}`);
               }
             }}
-            className="group/card block min-w-0 cursor-pointer"
+            className="group/card block min-w-0 cursor-pointer focus-visible:outline-none"
           >
-            <Card className="theme-hover-soft surface-panel rounded-none cursor-pointer overflow-hidden">
+            <Card className="theme-hover-soft surface-panel rounded-none cursor-pointer gap-0 py-0 overflow-hidden transition-colors duration-150 hover:bg-accent/55 group-focus-visible/card:bg-accent/55">
               <div className="flex gap-3 px-3 py-2.5 sm:min-h-[8.5rem] sm:px-4 sm:py-3">
                 <div className="hidden w-36 shrink-0 self-stretch overflow-hidden border border-border/60 sm:block sm:max-h-[8.5rem]">
                   <div className="relative h-full w-full">
@@ -237,7 +237,7 @@ export default function HomeFeedClient({
                           <Link
                             key={`${post.slug}-header-${tag}`}
                             href={`/tags/${encodeURIComponent(hrefSlug)}`}
-                            className="inline-flex max-w-[11rem] items-center rounded-sm border border-border/70 bg-muted/70 px-2 py-0.5 font-mono text-xs text-foreground transition-opacity hover:opacity-80 sm:max-w-none"
+                            className="inline-flex max-w-[11rem] items-center rounded-sm border border-border/80 bg-muted px-2 py-0.5 font-mono text-xs text-foreground transition-colors hover:bg-accent/60 sm:max-w-none"
                             onClick={(event) => event.stopPropagation()}
                             onKeyDown={(event) => event.stopPropagation()}
                           >
@@ -246,7 +246,7 @@ export default function HomeFeedClient({
                         );
                       })}
                       {post.tags.length === 0 ? (
-                        <span className="inline-flex items-center rounded-sm border border-border/70 bg-muted/70 px-2 py-0.5 font-mono text-xs text-muted-foreground">
+                        <span className="inline-flex items-center rounded-sm border border-border/80 bg-muted px-2 py-0.5 font-mono text-xs text-muted-foreground">
                           #태그없음
                         </span>
                       ) : null}
@@ -254,7 +254,7 @@ export default function HomeFeedClient({
                     <span className="font-mono text-xs text-muted-foreground sm:shrink-0">{post.date}</span>
                   </div>
 
-                  <CardTitle className="korean-display line-clamp-2 text-2xl leading-snug transition-opacity duration-150 group-hover/card:opacity-80">
+                  <CardTitle className="korean-display line-clamp-2 text-2xl leading-snug underline-offset-4 transition-all duration-150 group-hover/card:opacity-90 group-hover/card:underline group-focus-visible/card:opacity-90 group-focus-visible/card:underline">
                     {post.title}
                   </CardTitle>
                   <p className="line-clamp-2 font-mono text-sm text-muted-foreground">{post.summary}</p>

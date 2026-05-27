@@ -38,7 +38,8 @@ function CategoryNodeBranch({
 }) {
   const itemValue = `${groupName}-${path}`;
   const hasChildren = Boolean(node.children && node.children.length > 0);
-  const leftPaddingClass = depth === 0 ? "pl-4" : depth === 1 ? "pl-8" : "pl-12";
+  const leftPaddingClass = depth === 0 ? "pl-2 sm:pl-4" : depth === 1 ? "pl-4 sm:pl-8" : "pl-6 sm:pl-12";
+  const postsPaddingClass = depth === 0 ? "pl-4 sm:pl-8" : depth === 1 ? "pl-6 sm:pl-12" : "pl-8 sm:pl-16";
 
   return (
     <AccordionItem value={itemValue} className="border-border/40">
@@ -47,7 +48,7 @@ function CategoryNodeBranch({
       </AccordionTrigger>
       <AccordionContent>
         {node.posts.length > 0 ? (
-          <ul className={`space-y-1 ${depth === 0 ? "pl-8" : depth === 1 ? "pl-12" : "pl-16"}`}>
+          <ul className={`space-y-1 ${postsPaddingClass}`}>
             {node.posts.map((postItem, index) => {
               const title = typeof postItem === "string" ? postItem : postItem.title;
               const href = typeof postItem === "string" ? undefined : postItem.href;
@@ -95,7 +96,7 @@ export default function CategoryPanel({ title = "카테고리", groups }: Catego
       </CardHeader>
       <CardContent className="overflow-hidden">
         <ScrollArea className="pr-2 lg:max-h-[calc(100dvh-32.5rem)]">
-          <Accordion multiple className="w-full">
+          <Accordion multiple defaultValue={groups.map((group) => group.name)} className="w-full">
             {groups.map((group) => (
               <AccordionItem key={group.name} value={group.name} className="border-border/60">
                 <AccordionTrigger className="korean-display cursor-pointer text-base">{group.name}</AccordionTrigger>

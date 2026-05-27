@@ -100,7 +100,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           MooMooCow Devlog
         </h1>
         <p className="korean-display mt-3 text-xl text-foreground/90 sm:text-2xl">
-          실전 개발 과정과 트러블슈팅을 기록하는 개인 개발 로그
+          실전 개발 과정과 트러블슈팅을 기록하는{" "}
+          <span className="block sm:inline">개인 개발 로그</span>
         </p>
       </section>
 
