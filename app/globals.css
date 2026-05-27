@@ -270,6 +270,8 @@
     font-size: 1.6rem;
     line-height: 1.95;
     word-break: break-word;
+    overflow-wrap: anywhere;
+    max-width: 100%;
   }
 
   .markdown-preview > * + * {
@@ -383,14 +385,26 @@
     padding: 0.12rem 0.34rem;
   }
 
+  .markdown-preview :not(pre) > code {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
   .markdown-preview pre {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border: 1px solid color-mix(in oklab, var(--border) 100%, transparent);
     background-color: color-mix(in oklab, var(--muted) 40%, transparent);
     padding: 0.8rem 0.95rem;
   }
 
   .markdown-preview pre code {
+    display: block;
+    min-width: max-content;
     background: transparent;
     padding: 0;
     font-size: 1.25rem;
@@ -399,6 +413,10 @@
 
   .markdown-preview table {
     width: 100%;
+    max-width: 100%;
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border-collapse: collapse;
     margin: 1rem 0;
   }

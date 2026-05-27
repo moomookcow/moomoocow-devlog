@@ -196,7 +196,7 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
     <main className="relative mx-auto w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
       {post.thumbnailUrl ? (
         <div
-          className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 overflow-hidden"
+          className="pointer-events-none absolute inset-y-0 left-0 right-0 -z-10 overflow-hidden"
           aria-hidden="true"
         >
           <div className="relative h-full w-full">
@@ -212,13 +212,13 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
         </div>
       ) : null}
       <AutoScrollBottom enabled={shouldJumpToBottom} />
-      <ScrollProgressBar className="pointer-events-none fixed top-0 left-0 z-30 h-1 w-screen" />
+      <ScrollProgressBar className="pointer-events-none fixed top-0 left-0 z-30 h-1 w-full" />
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
-        <aside className="self-start space-y-4">
+        <aside className="order-3 self-start space-y-4 lg:order-1">
           <CategoryPanel groups={categoryGroups} />
         </aside>
 
-        <article className="space-y-3">
+        <article className="order-2 min-w-0 space-y-3">
           <Card className="surface-panel rounded-none">
             <CardHeader className="space-y-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -343,9 +343,9 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
           </Suspense>
         </article>
 
-        <aside className="self-start lg:sticky lg:top-4">
-          <Card className="surface-panel rounded-none">
-            <CardContent className="max-h-[calc(100dvh-6rem)] overflow-auto pr-2 pt-0">
+        <aside className="order-1 min-w-0 self-start lg:order-3 lg:sticky lg:top-4">
+          <Card className="surface-panel rounded-none gap-0 py-0">
+            <CardContent className="max-h-[calc(100dvh-6rem)] overflow-auto p-3">
               <ScrollToc contentSelector="#public-post-content" />
             </CardContent>
           </Card>
