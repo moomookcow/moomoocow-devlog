@@ -1,6 +1,6 @@
 export default function AdminLoading() {
   return (
-    <main className="mx-auto w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
+    <main className="mx-auto w-full max-w-[1680px] px-4 py-4 sm:px-6 lg:px-8">
       <section className="surface-panel mb-4 px-5 py-8 sm:px-8 sm:py-10">
         <div className="skeleton-block h-12 w-72 sm:h-16 sm:w-[32rem]" />
         <div className="mt-3 skeleton-block h-6 w-80 sm:w-[40rem]" />

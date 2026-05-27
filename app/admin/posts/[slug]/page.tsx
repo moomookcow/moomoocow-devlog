@@ -147,7 +147,7 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
   const headingRenderers = createHeadingRenderers();
 
   return (
-    <main className="relative mx-auto min-h-full w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
+    <main className="relative mx-auto min-h-full w-full max-w-[1680px] px-4 py-4 sm:px-6 lg:px-8">
       {post.thumbnailUrl ? (
         <div
           className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 overflow-hidden"

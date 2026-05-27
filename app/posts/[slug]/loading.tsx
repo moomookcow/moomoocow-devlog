@@ -1,6 +1,6 @@
 export default function PublicPostDetailLoading() {
   return (
-    <main className="mx-auto w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
+    <main className="mx-auto w-full max-w-[1680px] px-4 py-4 sm:px-6 lg:px-8">
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
         <div className="surface-panel h-80 animate-pulse rounded-none" />
         <div className="space-y-3">

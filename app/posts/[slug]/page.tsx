@@ -193,7 +193,7 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
   const headingRenderers = createHeadingRenderers();
 
   return (
-    <main className="relative mx-auto w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
+    <main className="relative mx-auto w-full max-w-[1680px] px-4 py-4 sm:px-6 lg:px-8">
       {post.thumbnailUrl ? (
         <div
           className="pointer-events-none absolute inset-y-0 left-0 right-0 -z-10 overflow-hidden"

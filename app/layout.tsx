@@ -39,7 +39,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <header className="border-b">
-          <div className="mx-auto flex h-20 w-full max-w-[1480px] items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex h-20 w-full max-w-[1680px] items-center justify-between px-4 sm:px-6 lg:px-8">
             <BrandGateLink />
             <div className="flex items-center gap-2">
               <ThemeToggle />
@@ -50,7 +50,7 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
 
         <footer className="border-t">
-          <div className="mx-auto flex h-20 w-full max-w-[1480px] items-center px-4 text-sm text-muted-foreground sm:px-6 lg:px-8">
+          <div className="mx-auto flex h-20 w-full max-w-[1680px] items-center px-4 text-sm text-muted-foreground sm:px-6 lg:px-8">
             moomoocow-devlog · Build in public · Hermes-inspired layout
           </div>
         </footer>

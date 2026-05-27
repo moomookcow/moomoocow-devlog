@@ -94,7 +94,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   }));
 
   return (
-    <div className="mx-auto w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full max-w-[1680px] px-4 py-4 sm:px-6 lg:px-8">
       <section className="surface-panel mb-4 px-5 py-8 sm:px-8 sm:py-10">
         <h1 className="korean-display text-balance text-5xl leading-[0.95] sm:text-7xl">
           MooMooCow Devlog

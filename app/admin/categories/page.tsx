@@ -150,7 +150,7 @@ export default async function AdminCategoriesPage({ searchParams }: AdminCategor
   const selectedParentPath = selectedCategory ? parentPathLabel(selectedCategory.id) : "";
 
   return (
-    <main className="mx-auto w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
+    <main className="mx-auto w-full max-w-[1680px] px-4 py-4 sm:px-6 lg:px-8">
       <section className="surface-panel mb-4 px-5 py-7 sm:px-8">
         <h1 className="korean-display text-4xl sm:text-5xl">카테고리 관리</h1>
         <p className="korean-display mt-2 text-lg text-foreground/85">Miller Columns 방식으로 계층 구조를 탐색하고 수정합니다.</p>
