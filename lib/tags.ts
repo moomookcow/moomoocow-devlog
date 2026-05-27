@@ -6,6 +6,23 @@ type SupabaseQueryClient = {
   rpc: Awaited<ReturnType<typeof createClient>>["rpc"];
 };
 
+function decodeTagSlugParam(value: string): string {
+  let current = value;
+
+  for (let i = 0; i < 2; i += 1) {
+    if (!current.includes("%")) break;
+    try {
+      const decoded = decodeURIComponent(current);
+      if (decoded === current) break;
+      current = decoded;
+    } catch {
+      break;
+    }
+  }
+
+  return current;
+}
+
 function isMissingTagTablesError(error: unknown): boolean {
   const code = (error as { code?: string })?.code;
   return code === "PGRST205" || code === "42P01";
@@ -27,7 +44,8 @@ export async function getTagLabelBySlug(
   supabase: SupabaseQueryClient,
   tagSlug: string,
 ): Promise<string> {
-  const normalized = normalizeSlugInput(tagSlug);
+  const decodedTagSlug = decodeTagSlugParam(tagSlug);
+  const normalized = normalizeSlugInput(decodedTagSlug);
   if (!normalized) return fallbackTitleFromSlug(tagSlug);
 
   const tagResult = await supabase
@@ -56,8 +74,13 @@ export async function listPublishedPostsByTagSlug(
   tagSlug: string,
   limit = 200,
 ): Promise<AdminPost[]> {
-  const normalized = normalizeSlugInput(tagSlug);
+  const decodedTagSlug = decodeTagSlugParam(tagSlug);
+  const normalized = normalizeSlugInput(decodedTagSlug);
   if (!normalized) return [];
+  const fallbackByPostTags = async () => {
+    const allPublished = await listPublishedPosts(supabase, limit * 2);
+    return filterPostsByTagSlug(allPublished, normalized).slice(0, limit);
+  };
 
   const tagResult = await supabase
     .from("tags")
@@ -67,14 +90,13 @@ export async function listPublishedPostsByTagSlug(
 
   if (tagResult.error) {
     if (isMissingTagTablesError(tagResult.error)) {
-      const allPublished = await listPublishedPosts(supabase, limit * 2);
-      return filterPostsByTagSlug(allPublished, normalized).slice(0, limit);
+      return fallbackByPostTags();
     }
     throw tagResult.error;
   }
 
   const tagId = tagResult.data?.id ? String(tagResult.data.id) : null;
-  if (!tagId) return [];
+  if (!tagId) return fallbackByPostTags();
 
   const postTagResult = await supabase
     .from("post_tags")
@@ -83,8 +105,7 @@ export async function listPublishedPostsByTagSlug(
 
   if (postTagResult.error) {
     if (isMissingTagTablesError(postTagResult.error)) {
-      const allPublished = await listPublishedPosts(supabase, limit * 2);
-      return filterPostsByTagSlug(allPublished, normalized).slice(0, limit);
+      return fallbackByPostTags();
     }
     throw postTagResult.error;
   }
@@ -92,7 +113,7 @@ export async function listPublishedPostsByTagSlug(
   const postIds = (postTagResult.data ?? [])
     .map((row) => String((row as { post_id: string }).post_id))
     .filter(Boolean);
-  if (postIds.length === 0) return [];
+  if (postIds.length === 0) return fallbackByPostTags();
 
   const postsResult = await supabase
     .from("posts")
@@ -108,7 +129,7 @@ export async function listPublishedPostsByTagSlug(
     throw postsResult.error;
   }
 
-  return (postsResult.data ?? []).map((row) => ({
+  const mapped = (postsResult.data ?? []).map((row) => ({
     id: String((row as { id: string }).id),
     slug: String((row as { slug: string }).slug),
     title: String((row as { title: string }).title),
@@ -124,4 +145,7 @@ export async function listPublishedPostsByTagSlug(
     visibility: ((row as { visibility: "public" | "private" | null }).visibility ?? "public"),
     thumbnailUrl: ((row as { thumbnail_url: string | null }).thumbnail_url ?? null),
   }));
+
+  if (mapped.length === 0) return fallbackByPostTags();
+  return mapped;
 }

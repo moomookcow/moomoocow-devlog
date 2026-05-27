@@ -244,6 +244,26 @@
     background-color: color-mix(in oklab, var(--accent) 72%, transparent);
   }
 
+  .post-feed-card:hover:not(:has([data-tag-link="true"]:hover)),
+  .post-feed-card:focus-within {
+    background-color: color-mix(in oklab, var(--accent) 72%, transparent);
+  }
+
+  .post-feed-card:has([data-tag-link="true"]:hover) {
+    background-color: transparent;
+  }
+
+  .post-feed-card:hover:not(:has([data-tag-link="true"]:hover)) .post-feed-card-title,
+  .post-feed-card:focus-within .post-feed-card-title {
+    text-decoration-line: underline;
+    opacity: 0.9;
+  }
+
+  .post-feed-card:has([data-tag-link="true"]:hover) .post-feed-card-title {
+    text-decoration-line: none;
+    opacity: 1;
+  }
+
   .markdown-preview {
     color: var(--foreground);
     font-family: var(--font-sans), sans-serif;

@@ -212,7 +212,7 @@ export default function HomeFeedClient({
             }}
             className="group/card block min-w-0 cursor-pointer focus-visible:outline-none"
           >
-            <Card className="theme-hover-soft surface-panel rounded-none cursor-pointer gap-0 py-0 overflow-hidden transition-colors duration-150 hover:bg-accent/55 group-focus-visible/card:bg-accent/55">
+            <Card className="post-feed-card theme-hover-soft surface-panel rounded-none cursor-pointer gap-0 py-0 overflow-hidden transition-colors duration-150 group-focus-visible/card:bg-accent/55">
               <div className="flex gap-3 px-3 py-2.5 sm:min-h-[8.5rem] sm:px-4 sm:py-3">
                 <div className="hidden w-36 shrink-0 self-stretch overflow-hidden border border-border/60 sm:block sm:max-h-[8.5rem]">
                   <div className="relative h-full w-full">
@@ -237,7 +237,8 @@ export default function HomeFeedClient({
                           <Link
                             key={`${post.slug}-header-${tag}`}
                             href={`/tags/${encodeURIComponent(hrefSlug)}`}
-                            className="inline-flex max-w-[11rem] items-center rounded-sm border border-border/80 bg-muted px-2 py-0.5 font-mono text-xs text-foreground transition-colors hover:bg-accent/60 sm:max-w-none"
+                            data-tag-link="true"
+                            className="inline-flex max-w-[11rem] items-center rounded-sm border border-border/80 bg-muted px-2 py-0.5 font-mono text-xs text-foreground transition-colors hover:border-primary/60 hover:bg-accent hover:text-foreground sm:max-w-none"
                             onClick={(event) => event.stopPropagation()}
                             onKeyDown={(event) => event.stopPropagation()}
                           >
@@ -254,7 +255,7 @@ export default function HomeFeedClient({
                     <span className="font-mono text-xs text-muted-foreground sm:shrink-0">{post.date}</span>
                   </div>
 
-                  <CardTitle className="korean-display line-clamp-2 text-2xl leading-snug underline-offset-4 transition-all duration-150 group-hover/card:opacity-90 group-hover/card:underline group-focus-visible/card:opacity-90 group-focus-visible/card:underline">
+                  <CardTitle className="post-feed-card-title korean-display line-clamp-2 text-2xl leading-snug underline-offset-4 transition-all duration-150 group-focus-visible/card:opacity-90 group-focus-visible/card:underline">
                     {post.title}
                   </CardTitle>
                   <p className="line-clamp-2 font-mono text-sm text-muted-foreground">{post.summary}</p>

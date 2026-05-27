@@ -92,9 +92,9 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
   return (
     <div className="mx-auto w-full max-w-[1480px] px-4 py-4 sm:px-6 lg:px-8">
       <section className="surface-panel mb-4 px-5 py-8 sm:px-8 sm:py-10">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="korean-display text-balance text-5xl leading-[0.95] sm:text-7xl">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="korean-display break-words text-4xl leading-[0.95] sm:text-7xl">
               #{tagLabel}
             </h1>
             <p className="korean-display mt-3 text-xl text-foreground/90 sm:text-2xl">
@@ -103,7 +103,7 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
           </div>
           <Link
             href="/"
-            className={cn(buttonVariants({ variant: "outline" }), "h-10 rounded-none px-4")}
+            className={cn(buttonVariants({ variant: "outline" }), "h-10 w-full rounded-none px-4 sm:w-auto")}
           >
             홈으로
           </Link>
