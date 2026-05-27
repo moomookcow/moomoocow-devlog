@@ -62,14 +62,14 @@ function CategoryNodeBranch({
               return (
               <li
                 key={`${itemValue}-${title}-${index}`}
-                className="theme-hover-soft korean-display cursor-pointer rounded-[2px] px-1 py-0.5 text-sm"
+                className="theme-hover-soft korean-display min-w-0 cursor-pointer rounded-[2px] px-1 py-0.5 text-sm"
               >
                 {href ? (
-                  <Link href={href} className="block truncate whitespace-nowrap overflow-hidden text-ellipsis no-underline hover:opacity-85 hover:underline hover:underline-offset-2">
+                  <Link href={href} className="block w-full truncate whitespace-nowrap overflow-hidden text-ellipsis no-underline hover:opacity-85 hover:underline hover:underline-offset-2">
                     {title}
                   </Link>
                 ) : (
-                  <span className="block truncate whitespace-nowrap overflow-hidden text-ellipsis">{title}</span>
+                  <span className="block w-full truncate whitespace-nowrap overflow-hidden text-ellipsis">{title}</span>
                 )}
               </li>
               );

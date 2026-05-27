@@ -176,8 +176,8 @@
 - [x] Epic E: 홈(`/`) 모바일 레이아웃 점검/수정
 - [x] Epic E: 태그(`/tags/[slug]`) 모바일 레이아웃 점검/수정
 - [x] Epic E: 상세(`/posts/[slug]`) 모바일 레이아웃 점검/수정
-- [ ] Epic E: 관리자 핵심 화면 모바일 점검/수정
-- [ ] Epic E 완료
+- [x] Epic E: 관리자 핵심 화면 모바일 점검/수정
+- [x] Epic E 완료
 
 - [ ] Epic B(SEO) 착수
 - [ ] Epic B: 페이지별 metadata 정리

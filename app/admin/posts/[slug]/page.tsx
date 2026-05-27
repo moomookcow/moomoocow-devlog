@@ -150,7 +150,7 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
     <main className="relative mx-auto min-h-full w-full max-w-[1680px] px-4 py-4 sm:px-6 lg:px-8">
       {post.thumbnailUrl ? (
         <div
-          className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 overflow-hidden"
+          className="pointer-events-none absolute inset-y-0 left-0 right-0 -z-10 overflow-hidden"
           aria-hidden="true"
         >
           <div className="relative h-full w-full">
@@ -165,7 +165,7 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
           </div>
         </div>
       ) : null}
-      <ScrollProgressBar className="pointer-events-none fixed top-0 left-0 z-30 h-1 w-screen" />
+      <ScrollProgressBar className="pointer-events-none fixed top-0 left-0 z-30 h-1 w-full" />
       {successMessage ? (
         <p className="text-sm text-foreground" role="status">
           {successMessage}
@@ -173,22 +173,22 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="space-y-4">
+        <section className="min-w-0 space-y-4">
           <Card>
             <CardHeader className="space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <CardTitle className="text-3xl leading-[1.1] sm:text-4xl">{post.title}</CardTitle>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Link href="/admin" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-md px-4")}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <CardTitle className="korean-display text-3xl leading-[1.1] sm:text-4xl">{post.title}</CardTitle>
+                <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+                  <Link href="/admin" className={cn(buttonVariants({ variant: "outline" }), "h-9 w-full rounded-md px-4 sm:w-auto")}>
                     대시보드로
                   </Link>
                   <Link
                     href={`/admin/new?slug=${encodeURIComponent(post.slug)}`}
-                    className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-md px-4")}
+                    className={cn(buttonVariants({ variant: "outline" }), "h-9 w-full rounded-md px-4 sm:w-auto")}
                   >
                     글 수정
                   </Link>
-                  <Link href="/admin/new" className={cn(buttonVariants({ variant: "default" }), "h-9 rounded-md px-4")}>
+                  <Link href="/admin/new" className={cn(buttonVariants({ variant: "default" }), "h-9 w-full rounded-md px-4 sm:w-auto")}>
                     새 글 작성
                   </Link>
                 </div>
@@ -264,7 +264,7 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
           </Card>
         </section>
 
-        <aside className="self-start lg:sticky lg:top-4">
+        <aside className="min-w-0 self-start lg:sticky lg:top-4">
           <Card className="surface-panel rounded-none">
             <CardContent className="max-h-[calc(100dvh-6rem)] overflow-auto pr-2 pt-0">
               <ScrollToc contentSelector="#admin-post-content" />

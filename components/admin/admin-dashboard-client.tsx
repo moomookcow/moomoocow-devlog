@@ -113,7 +113,7 @@ export default function AdminDashboardClient({
 
   return (
     <>
-      <section className="space-y-3">
+      <section className="min-w-0 space-y-3">
         <Card className="surface-panel rounded-none">
           <CardHeader className="gap-3 sm:flex sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-2">
@@ -240,7 +240,7 @@ export default function AdminDashboardClient({
                           </div>
                         ) : null}
                         <div className="min-w-0 space-y-1">
-                          <Link href={`/admin/posts/${encodeURIComponent(post.slug)}`} className="korean-display block truncate text-xl hover:opacity-85">
+                          <Link href={`/admin/posts/${encodeURIComponent(post.slug)}`} className="korean-display block w-full truncate text-xl hover:opacity-85">
                             {post.title}
                           </Link>
                           {post.tags.length > 0 ? (
@@ -268,8 +268,8 @@ export default function AdminDashboardClient({
                         </Link>
                       </div>
                     </div>
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                      <p className="line-clamp-2 font-mono text-sm text-muted-foreground">{post.summary || "소개글이 없습니다."}</p>
+                    <div className="mt-2 flex min-w-0 items-center justify-between gap-2">
+                      <p className="min-w-0 line-clamp-2 font-mono text-sm text-muted-foreground">{post.summary || "소개글이 없습니다."}</p>
                       <span className="shrink-0 font-mono text-xs text-muted-foreground">{formatDate(post.updatedAt)}</span>
                     </div>
                   </li>
@@ -280,7 +280,7 @@ export default function AdminDashboardClient({
         </Card>
       </section>
 
-      <aside className="lg:sticky lg:top-24">
+      <aside className="min-w-0 lg:sticky lg:top-24">
         <RightFeedPanel
           panelTitle="피드 패널"
           searchPlaceholder="어드민 글 검색"
