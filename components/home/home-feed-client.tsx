@@ -11,6 +11,7 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_THUMBNAIL_SRC = "/default-thumbnail.svg";
+const TAG_LABEL_COLLATOR = new Intl.Collator("en", { sensitivity: "base", numeric: true });
 
 type HomePostCard = {
   slug: string;
@@ -84,7 +85,7 @@ export default function HomeFeedClient({
 
     return Array.from(tagMap.values()).sort((a, b) => {
       if (b.count !== a.count) return b.count - a.count;
-      return a.label.localeCompare(b.label);
+      return TAG_LABEL_COLLATOR.compare(a.label, b.label);
     });
   }, [posts]);
 
