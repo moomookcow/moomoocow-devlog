@@ -264,11 +264,20 @@
     opacity: 1;
   }
 
+  .category-panel a {
+    text-decoration: none;
+  }
+
+  .category-panel a:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
   .markdown-preview {
     color: var(--foreground);
     font-family: var(--font-sans), sans-serif;
-    font-size: 1.6rem;
-    line-height: 1.95;
+    font-size: 1.4rem;
+    line-height: 1.85;
     word-break: break-word;
     overflow-wrap: anywhere;
     max-width: 100%;
@@ -320,7 +329,7 @@
   .markdown-preview li,
   .markdown-preview td,
   .markdown-preview th {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
   }
 
   .markdown-preview strong {
@@ -407,8 +416,8 @@
     min-width: max-content;
     background: transparent;
     padding: 0;
-    font-size: 1.25rem;
-    line-height: 1.7;
+    font-size: 1.07rem;
+    line-height: 1.62;
   }
 
   .markdown-preview table {
@@ -441,15 +450,15 @@
 
   @media (max-width: 640px) {
     .markdown-preview {
-      font-size: 1.2rem;
-      line-height: 1.75;
+      font-size: 1rem;
+      line-height: 1.65;
     }
 
     .markdown-preview p,
     .markdown-preview li,
     .markdown-preview td,
     .markdown-preview th {
-      font-size: 1.2rem;
+      font-size: 1rem;
     }
 
     .markdown-preview h1 {
@@ -477,8 +486,8 @@
     }
 
     .markdown-preview pre code {
-      font-size: 1rem;
-      line-height: 1.55;
+      font-size: 0.84rem;
+      line-height: 1.48;
     }
   }
 

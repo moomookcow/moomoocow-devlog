@@ -214,17 +214,17 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
       <AutoScrollBottom enabled={shouldJumpToBottom} />
       <ScrollProgressBar className="pointer-events-none fixed top-0 left-0 z-30 h-1 w-full" />
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
-        <aside className="order-3 self-start space-y-4 lg:order-1">
-          <CategoryPanel groups={categoryGroups} />
+        <aside className="order-3 self-start space-y-4 lg:order-1 lg:sticky lg:top-4">
+          <CategoryPanel groups={categoryGroups} stickyMode />
         </aside>
 
         <article className="order-2 min-w-0 space-y-3">
           <Card className="surface-panel rounded-none">
             <CardHeader className="space-y-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <CardTitle className="korean-display text-4xl leading-[1.08] sm:text-5xl lg:text-6xl">{post.title}</CardTitle>
+                <CardTitle className="korean-display text-3xl leading-[1.1] sm:text-4xl lg:text-5xl">{post.title}</CardTitle>
               </div>
-              <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:text-base">
                 <span className="korean-display font-medium text-foreground">{authorName}</span>
                 <span>·</span>
                 <span className="font-mono">{formatDate(post.publishedAt || post.updatedAt)}</span>
@@ -246,7 +246,7 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
               {post.category ? (
                 <Accordion multiple defaultValue={["same-category"]} className="w-full border-t border-border/60 pt-2">
                   <AccordionItem value="same-category" className="border-b-0">
-                    <AccordionTrigger className="korean-display rounded-none px-1 py-1 text-2xl hover:no-underline">
+                    <AccordionTrigger className="korean-display rounded-none px-1 py-1 text-xl hover:no-underline sm:text-2xl">
                       같은 카테고리 글 · {categoryLabel}
                     </AccordionTrigger>
                     <AccordionContent className="pb-0 [&_a]:no-underline">
@@ -260,7 +260,7 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
                                   href={`/posts/${encodeURIComponent(item.slug)}`}
                                   aria-current={isCurrent ? "page" : undefined}
                                   className={cn(
-                                    "korean-display block rounded-none px-1 py-1 text-2xl no-underline",
+                                    "korean-display block rounded-none px-1 py-1 text-xl no-underline sm:text-2xl",
                                     isCurrent ? "font-bold text-foreground" : "text-muted-foreground hover:text-foreground",
                                   )}
                                 >
@@ -271,7 +271,7 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
                           })}
                         </ul>
                       ) : (
-                        <p className="korean-display px-1 py-1 text-2xl text-muted-foreground">
+                        <p className="korean-display px-1 py-1 text-xl text-muted-foreground sm:text-2xl">
                           같은 카테고리 글이 아직 없습니다.
                         </p>
                       )}

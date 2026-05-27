@@ -107,7 +107,7 @@ export default function ScrollToc({ contentSelector, title = "Table of contents"
 
   return (
     <div className={cn("space-y-3", className)}>
-      <p className="korean-display text-2xl">{title}</p>
+      <p className="korean-display text-xl sm:text-2xl">{title}</p>
       {hasItems ? (
         <ul className="space-y-1">
           {itemList.map((item) => (
@@ -131,7 +131,7 @@ export default function ScrollToc({ contentSelector, title = "Table of contents"
                   setActiveId(item.id);
                 }}
                 className={cn(
-                  "korean-display block cursor-pointer py-0.5 text-lg transition-colors",
+                  "korean-display block cursor-pointer py-0.5 text-base sm:text-lg transition-colors",
                   item.depth === 1 ? "pl-0" : item.depth === 2 ? "pl-3" : "pl-6",
                   activeId === item.id ? "font-extrabold text-foreground" : "font-medium text-foreground/80 hover:text-foreground",
                 )}

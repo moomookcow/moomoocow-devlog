@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -23,6 +26,7 @@ export type CategoryGroup = {
 type CategoryPanelProps = {
   title?: string;
   groups: CategoryGroup[];
+  stickyMode?: boolean;
 };
 
 function CategoryNodeBranch({
@@ -30,11 +34,13 @@ function CategoryNodeBranch({
   node,
   path,
   depth,
+  expandAll,
 }: {
   groupName: string;
   node: CategoryTreeNode;
   path: string;
   depth: number;
+  expandAll: boolean;
 }) {
   const itemValue = `${groupName}-${path}`;
   const hasChildren = Boolean(node.children && node.children.length > 0);
@@ -43,10 +49,10 @@ function CategoryNodeBranch({
 
   return (
     <AccordionItem value={itemValue} className="border-border/40">
-      <AccordionTrigger className={`korean-display cursor-pointer text-sm text-muted-foreground ${leftPaddingClass}`}>
+      <AccordionTrigger className={`korean-display cursor-pointer text-sm text-muted-foreground hover:no-underline ${leftPaddingClass}`}>
         {node.name}
       </AccordionTrigger>
-      <AccordionContent>
+      <AccordionContent className="[&_a]:no-underline [&_a:hover]:underline [&_a:hover]:underline-offset-2">
         {node.posts.length > 0 ? (
           <ul className={`space-y-1 ${postsPaddingClass}`}>
             {node.posts.map((postItem, index) => {
@@ -59,11 +65,11 @@ function CategoryNodeBranch({
                 className="theme-hover-soft korean-display cursor-pointer rounded-[2px] px-1 py-0.5 text-sm"
               >
                 {href ? (
-                  <Link href={href} className="block hover:opacity-85">
+                  <Link href={href} className="block truncate whitespace-nowrap overflow-hidden text-ellipsis no-underline hover:opacity-85 hover:underline hover:underline-offset-2">
                     {title}
                   </Link>
                 ) : (
-                  <span>{title}</span>
+                  <span className="block truncate whitespace-nowrap overflow-hidden text-ellipsis">{title}</span>
                 )}
               </li>
               );
@@ -71,7 +77,12 @@ function CategoryNodeBranch({
           </ul>
         ) : null}
         {hasChildren ? (
-          <Accordion multiple className="w-full">
+          <Accordion
+            key={`${itemValue}-${expandAll ? "expanded" : "collapsed"}`}
+            multiple
+            defaultValue={expandAll ? node.children!.map((_, index) => `${groupName}-${path}-${index}`) : undefined}
+            className="w-full"
+          >
             {node.children!.map((child, index) => (
               <CategoryNodeBranch
                 key={`${itemValue}-${child.name}-${index}`}
@@ -79,6 +90,7 @@ function CategoryNodeBranch({
                 node={child}
                 path={`${path}-${index}`}
                 depth={depth + 1}
+                expandAll={expandAll}
               />
             ))}
           </Accordion>
@@ -88,20 +100,40 @@ function CategoryNodeBranch({
   );
 }
 
-export default function CategoryPanel({ title = "카테고리", groups }: CategoryPanelProps) {
+export default function CategoryPanel({ title = "카테고리", groups, stickyMode = false }: CategoryPanelProps) {
+  const [expandAllDesktop, setExpandAllDesktop] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 1024px)");
+    const apply = () => setExpandAllDesktop(media.matches);
+    apply();
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, []);
+
   return (
-    <Card className="surface-panel rounded-none flex flex-col overflow-hidden lg:max-h-[calc(100dvh-26rem)]">
+    <Card className={stickyMode ? "category-panel surface-panel rounded-none flex flex-col overflow-hidden" : "category-panel surface-panel rounded-none flex flex-col overflow-hidden lg:max-h-[calc(100dvh-26rem)]"}>
       <CardHeader className="pb-2">
         <CardTitle className="korean-display text-2xl">{title}</CardTitle>
       </CardHeader>
       <CardContent className="overflow-hidden">
-        <ScrollArea className="pr-2 lg:max-h-[calc(100dvh-32.5rem)]">
-          <Accordion multiple defaultValue={groups.map((group) => group.name)} className="w-full">
+        <ScrollArea className={stickyMode ? "pr-2" : "pr-2 lg:max-h-[calc(100dvh-32.5rem)]"}>
+          <Accordion
+            key={`root-${expandAllDesktop ? "expanded" : "collapsed"}`}
+            multiple
+            defaultValue={expandAllDesktop ? groups.map((group) => group.name) : undefined}
+            className="w-full"
+          >
             {groups.map((group) => (
               <AccordionItem key={group.name} value={group.name} className="border-border/60">
-                <AccordionTrigger className="korean-display cursor-pointer text-base">{group.name}</AccordionTrigger>
-                <AccordionContent>
-                  <Accordion multiple className="w-full">
+                <AccordionTrigger className="korean-display cursor-pointer text-base hover:no-underline">{group.name}</AccordionTrigger>
+                <AccordionContent className="[&_a]:no-underline [&_a:hover]:underline [&_a:hover]:underline-offset-2">
+                  <Accordion
+                    key={`${group.name}-${expandAllDesktop ? "expanded" : "collapsed"}`}
+                    multiple
+                    defaultValue={expandAllDesktop ? group.children.map((_, index) => `${group.name}-${index}`) : undefined}
+                    className="w-full"
+                  >
                     {group.children.map((child, index) => (
                       <CategoryNodeBranch
                         key={`${group.name}-${child.name}-${index}`}
@@ -109,6 +141,7 @@ export default function CategoryPanel({ title = "카테고리", groups }: Catego
                         node={child}
                         path={String(index)}
                         depth={0}
+                        expandAll={expandAllDesktop}
                       />
                     ))}
                   </Accordion>
