@@ -165,3 +165,53 @@
 - 2026-05-27: Draft v1 생성
 - 2026-05-27: 모바일 반응형 개선, 재방문 캐시 성능 개선, 게시글 삭제 기능 요구사항 추가
 - 2026-05-27: 구글 서치 콘솔 연동 항목 추가(최종 단계로 배치)
+
+## 10. 실행 TODO 체크리스트
+- [ ] Epic A(인증/인가) 착수
+- [ ] Epic A: `/admin/login -> /admin -> /admin/new` 정상 흐름 검증
+- [ ] Epic A: 비인가 접근 차단/리다이렉트 일관성 검증
+- [ ] Epic A 완료
+
+- [ ] Epic E(모바일 반응형) 착수
+- [ ] Epic E: 홈(`/`) 모바일 레이아웃 점검/수정
+- [ ] Epic E: 태그(`/tags/[slug]`) 모바일 레이아웃 점검/수정
+- [ ] Epic E: 상세(`/posts/[slug]`) 모바일 레이아웃 점검/수정
+- [ ] Epic E: 관리자 핵심 화면 모바일 점검/수정
+- [ ] Epic E 완료
+
+- [ ] Epic B(SEO) 착수
+- [ ] Epic B: 페이지별 metadata 정리
+- [ ] Epic B: `sitemap.ts` 추가
+- [ ] Epic B: `robots.ts` 추가
+- [ ] Epic B: canonical URL 전략 반영
+- [ ] Epic B 완료
+
+- [ ] Epic F(캐시/재방문 성능) 착수
+- [ ] Epic F: 게시글 재방문 시 로딩 개선(캐시/재요청 최소화)
+- [ ] Epic F: prefetch/cache/revalidate 정책 정리
+- [ ] Epic F 완료
+
+- [ ] Epic G(게시글 삭제) 착수
+- [ ] Epic G: 관리자 삭제 액션 추가
+- [ ] Epic G: 삭제 Confirm UX 추가
+- [ ] Epic G: 연관 데이터 정합성 점검(댓글/조회수/slug alias)
+- [ ] Epic G 완료
+
+- [ ] Epic C(댓글 안전장치) 착수
+- [ ] Epic C: rate limiting 1차 적용
+- [ ] Epic C: 스팸 규칙(링크 과다/비정상 입력) 적용
+- [ ] Epic C 완료
+
+- [ ] Epic D(테스트/운영 자동화) 착수
+- [ ] Epic D: `pnpm lint` 통과
+- [ ] Epic D: `pnpm exec tsc --noEmit` 통과
+- [ ] Epic D: 핵심 흐름 테스트(로그인->작성->출간->조회) 구성/통과
+- [ ] Epic D 완료
+
+- [ ] Epic H(구글 서치 콘솔 연동, 최종) 착수
+- [ ] Epic H: Search Console 소유권 인증
+- [ ] Epic H: 사이트맵 제출 및 읽기 성공 확인
+- [ ] Epic H: 핵심 페이지 인덱싱 요청/상태 확인
+- [ ] Epic H 완료
+
+- [ ] 전체 마감: DoD 충족 확인
