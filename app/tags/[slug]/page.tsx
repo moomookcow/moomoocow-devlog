@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -18,6 +19,30 @@ type TagPageProps = {
   params: Promise<{ slug: string }>;
   searchParams?: Promise<{ q?: string; tag?: string }>;
 };
+
+export async function generateMetadata({ params }: Pick<TagPageProps, "params">): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = createPublicClient();
+  const tagLabel = await getTagLabelBySlug(supabase, slug);
+  const canonical = `/tags/${encodeURIComponent(slug)}`;
+
+  return {
+    title: `태그: ${tagLabel}`,
+    description: `${tagLabel} 태그로 묶인 기술 글 모음`,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title: `태그: ${tagLabel}`,
+      description: `${tagLabel} 태그로 묶인 기술 글 모음`,
+      url: canonical,
+    },
+    twitter: {
+      title: `태그: ${tagLabel}`,
+      description: `${tagLabel} 태그로 묶인 기술 글 모음`,
+    },
+  };
+}
 
 function formatDate(value: string | null) {
   if (!value) return "-";

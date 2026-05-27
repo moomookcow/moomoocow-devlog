@@ -3,6 +3,7 @@ import { Geist_Mono, Noto_Sans_KR, Song_Myung } from "next/font/google";
 import "./globals.css";
 import BrandGateLink from "@/components/brand-gate-link";
 import ThemeToggle from "@/components/theme-toggle";
+import { getSiteUrl, toAbsoluteUrl } from "@/lib/site";
 
 const notoSansKr = Noto_Sans_KR({
   variable: "--font-noto-sans-kr",
@@ -23,8 +24,37 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "moomoocow-devlog",
-  description: "기술개발 블로그",
+  metadataBase: new URL(getSiteUrl()),
+  title: {
+    default: "Moomoocow Devlog",
+    template: "%s | Moomoocow Devlog",
+  },
+  description: "실전 개발 과정과 트러블슈팅을 기록하는 개인 개발 로그",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    url: "/",
+    siteName: "Moomoocow Devlog",
+    title: "Moomoocow Devlog",
+    description: "실전 개발 과정과 트러블슈팅을 기록하는 개인 개발 로그",
+    images: [
+      {
+        url: toAbsoluteUrl("/default-thumbnail.svg"),
+        width: 1200,
+        height: 630,
+        alt: "Moomoocow Devlog",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Moomoocow Devlog",
+    description: "실전 개발 과정과 트러블슈팅을 기록하는 개인 개발 로그",
+    images: [toAbsoluteUrl("/default-thumbnail.svg")],
+  },
 };
 
 export default function RootLayout({
@@ -51,7 +81,7 @@ export default function RootLayout({
 
         <footer className="border-t">
           <div className="mx-auto flex h-20 w-full max-w-[1680px] items-center px-4 text-sm text-muted-foreground sm:px-6 lg:px-8">
-            moomoocow-devlog · Build in public · Hermes-inspired layout
+            Moomoocow Devlog · Build in public · Hermes-inspired layout
           </div>
         </footer>
       </body>

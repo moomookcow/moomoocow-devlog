@@ -53,9 +53,9 @@ export default function BrandGateLink() {
       onClick={onClick}
       className="korean-display cursor-pointer text-2xl leading-none"
       aria-label="브랜드 로고"
-      title="moomoocow-devlog"
+      title="Moomoocow Devlog"
     >
-      moomoocow-devlog
+      Moomoocow Devlog
     </button>
   );
 }

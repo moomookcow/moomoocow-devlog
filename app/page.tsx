@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import HomeFeedClient from "@/components/home/home-feed-client";
 import CategoryPanel from "@/components/shared/category-panel";
 import { buildCategoryPanelGroups } from "@/lib/category-panel-data";
@@ -10,6 +12,13 @@ type HomePageProps = {
 };
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "홈",
+  description: "최신 기술 글, 인기 글, 최근 댓글을 한 번에 보는 개발 블로그 홈",
+  alternates: {
+    canonical: "/",
+  },
+};
 
 function formatDate(value: string | null) {
   if (!value) return "-";
@@ -97,7 +106,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     <div className="mx-auto w-full max-w-[1680px] px-4 py-4 sm:px-6 lg:px-8">
       <section className="surface-panel mb-4 px-5 py-8 sm:px-8 sm:py-10">
         <h1 className="korean-display text-balance text-5xl leading-[0.95] sm:text-7xl">
-          MooMooCow Devlog
+          Moomoocow Devlog
         </h1>
         <p className="korean-display mt-3 text-xl text-foreground/90 sm:text-2xl">
           실전 개발 과정과 트러블슈팅을 기록하는{" "}

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import NextImage from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -37,6 +38,48 @@ const COMMENT_ERROR_MESSAGE: Record<string, string> = {
   save_failed: "댓글 저장에 실패했습니다. 잠시 후 다시 시도해주세요.",
   post_not_found: "게시글을 찾을 수 없습니다.",
 };
+
+export async function generateMetadata({ params }: Pick<PublicPostPageProps, "params">): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = createPublicClient();
+  const post = await getPublishedPostBySlug(supabase, slug);
+  const canonical = `/posts/${encodeURIComponent(slug)}`;
+
+  if (!post) {
+    return {
+      title: "게시글",
+      alternates: { canonical },
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const description = (post.summary ?? "").trim() || `${post.title} 게시글`;
+  const image = post.thumbnailUrl || "/default-thumbnail.svg";
+
+  return {
+    title: post.title,
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      type: "article",
+      title: post.title,
+      description,
+      url: canonical,
+      publishedTime: post.publishedAt ?? undefined,
+      modifiedTime: post.updatedAt ?? undefined,
+      tags: post.tags ?? [],
+      images: [{ url: image }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description,
+      images: [image],
+    },
+  };
+}
 
 function isSupabaseStorageImage(url: string) {
   return url.includes(SUPABASE_STORAGE_PUBLIC_PATH);
