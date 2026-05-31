@@ -125,6 +125,9 @@ export default function AdminDashboardClient({
               <Link href="/admin/categories" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-none px-4")}>
                 카테고리 관리
               </Link>
+              <Link href="/admin/draft-from-pdf" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-none px-4")}>
+                PDF 초안 생성
+              </Link>
               <Link href="/admin/new" className={cn(buttonVariants({ variant: "default" }), "h-9 rounded-none px-4")}>
                 새 글 작성
               </Link>

@@ -226,9 +226,9 @@
 - [x] Epic H: 핵심 페이지 인덱싱 요청/상태 확인
 - [x] Epic H 완료
 
-- [ ] Epic I(PDF 기반 초안 생성기) 착수
-- [ ] Epic I: `/admin` 액션 버튼에 `PDF 초안 생성` 버튼 추가
-- [ ] Epic I: PDF 업로드/입력 화면 라우트 추가(`/admin/draft-from-pdf`)
+- [x] Epic I(PDF 기반 초안 생성기) 착수
+- [x] Epic I: `/admin` 액션 버튼에 `PDF 초안 생성` 버튼 추가
+- [x] Epic I: PDF 업로드/입력 화면 라우트 추가(`/admin/draft-from-pdf`)
 - [ ] Epic I: 텍스트층 PDF 파싱 구현(1차)
 - [ ] Epic I: OCR 처리 파이프라인 추가(스캔 PDF 대응)
 - [ ] Epic I: 한글 과분리 텍스트 후처리 규칙 적용
