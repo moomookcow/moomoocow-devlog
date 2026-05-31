@@ -193,18 +193,19 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <CardTitle className="korean-display text-3xl leading-[1.1] sm:text-4xl">{post.title}</CardTitle>
                 <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
-                  <Link href="/admin" className={cn(buttonVariants({ variant: "outline" }), "h-9 w-full rounded-md px-4 sm:w-auto")}>
+                  <Link prefetch={false} href="/admin" className={cn(buttonVariants({ variant: "outline" }), "h-9 w-full rounded-md px-4 sm:w-auto")}>
                     대시보드로
                   </Link>
                   <Link
+                    prefetch={false}
                     href={`/admin/new?slug=${encodeURIComponent(post.slug)}`}
                     className={cn(buttonVariants({ variant: "outline" }), "h-9 w-full rounded-md px-4 sm:w-auto")}
                   >
                     글 수정
                   </Link>
-                  <Link href="/admin/new" className={cn(buttonVariants({ variant: "default" }), "h-9 w-full rounded-md px-4 sm:w-auto")}>
+                  <a href="/admin/new" className={cn(buttonVariants({ variant: "default" }), "h-9 w-full rounded-md px-4 sm:w-auto")}>
                     새 글 작성
-                  </Link>
+                  </a>
                 </div>
               </div>
               <form action={deletePostAction} className="grid gap-2 border-t border-border/60 pt-3 sm:max-w-md">
@@ -260,6 +261,7 @@ export default async function AdminPostDetailPage({ params, searchParams }: Admi
                             return (
                               <li key={item.id}>
                                 <Link
+                                  prefetch={false}
                                   href={`/admin/posts/${encodeURIComponent(item.slug)}`}
                                   aria-current={isCurrent ? "page" : undefined}
                                   className={cn(

@@ -122,15 +122,15 @@ export default function AdminDashboardClient({
               <CardDescription>카테고리 관리, 글 작성, 발행 상태를 중앙에서 제어합니다.</CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Link href="/admin/categories" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-none px-4")}>
+              <Link prefetch={false} href="/admin/categories" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-none px-4")}>
                 카테고리 관리
               </Link>
-              <Link href="/admin/draft-from-pdf" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-none px-4")}>
+              <Link prefetch={false} href="/admin/draft-from-pdf" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-none px-4")}>
                 PDF 초안 생성
               </Link>
-              <Link href="/admin/new" className={cn(buttonVariants({ variant: "default" }), "h-9 rounded-none px-4")}>
+              <a href="/admin/new" className={cn(buttonVariants({ variant: "default" }), "h-9 rounded-none px-4")}>
                 새 글 작성
-              </Link>
+              </a>
               <Link href="/auth/signout" className={cn(buttonVariants({ variant: "outline" }), "h-9 rounded-none px-4")}>
                 로그아웃
               </Link>
@@ -168,7 +168,7 @@ export default function AdminDashboardClient({
                       <div className="flex items-center justify-between gap-2">
                         <div className="min-w-0">
                           <p className="font-mono text-xs text-muted-foreground">#{String(item.rank).padStart(2, "0")}</p>
-                          <Link href={`/admin/posts/${encodeURIComponent(item.slug)}`} className="korean-display line-clamp-1 text-lg hover:opacity-85">
+                          <Link prefetch={false} href={`/admin/posts/${encodeURIComponent(item.slug)}`} className="korean-display line-clamp-1 text-lg hover:opacity-85">
                             {item.title}
                           </Link>
                         </div>
@@ -243,7 +243,7 @@ export default function AdminDashboardClient({
                           </div>
                         ) : null}
                         <div className="min-w-0 space-y-1">
-                          <Link href={`/admin/posts/${encodeURIComponent(post.slug)}`} className="korean-display block w-full truncate text-xl hover:opacity-85">
+                          <Link prefetch={false} href={`/admin/posts/${encodeURIComponent(post.slug)}`} className="korean-display block w-full truncate text-xl hover:opacity-85">
                             {post.title}
                           </Link>
                           {post.tags.length > 0 ? (
@@ -266,7 +266,7 @@ export default function AdminDashboardClient({
                         <Badge variant="outline" className="rounded-sm px-2.5 py-1 text-sm">
                           {post.status.toUpperCase()}
                         </Badge>
-                        <Link href={`/admin/new?slug=${encodeURIComponent(post.slug)}`} className={cn(buttonVariants({ variant: "outline" }), "h-8 rounded-none px-3")}>
+                        <Link prefetch={false} href={`/admin/new?slug=${encodeURIComponent(post.slug)}`} className={cn(buttonVariants({ variant: "outline" }), "h-8 rounded-none px-3")}>
                           편집
                         </Link>
                       </div>
