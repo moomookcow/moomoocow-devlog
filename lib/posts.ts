@@ -306,7 +306,7 @@ export async function listAdminPosts(supabase: SupabaseQueryClient, limit = 50):
   const { data, error } = await supabase
     .from("posts")
     .select(POST_SELECT_FIELDS)
-    .order("updated_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false, nullsFirst: false })
     .limit(limit);
 
   if (error) {
@@ -322,8 +322,7 @@ export async function listPublishedPosts(supabase: SupabaseQueryClient, limit = 
     .select(POST_SELECT_FIELDS)
     .eq("status", "published")
     .eq("visibility", "public")
-    .order("published_at", { ascending: false, nullsFirst: false })
-    .order("updated_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false, nullsFirst: false })
     .limit(limit);
 
   if (error) {
@@ -342,8 +341,7 @@ export async function listPublishedPostSummaries(
     .select(POST_LIST_SELECT_FIELDS)
     .eq("status", "published")
     .eq("visibility", "public")
-    .order("published_at", { ascending: false, nullsFirst: false })
-    .order("updated_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false, nullsFirst: false })
     .limit(limit);
 
   if (error) {
