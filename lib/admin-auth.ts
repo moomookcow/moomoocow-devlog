@@ -20,6 +20,15 @@ export async function requireAdminOrRedirect(
 
   const user = directUser ?? session?.user ?? null;
 
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[admin-auth]", {
+      nextPath,
+      directUser: directUser?.email ?? null,
+      sessionUser: session?.user?.email ?? null,
+      hasSession: Boolean(session),
+    });
+  }
+
   if (!user) {
     redirect(buildAdminLoginUrl(undefined, nextPath));
   }
