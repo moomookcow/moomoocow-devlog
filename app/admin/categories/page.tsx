@@ -58,10 +58,16 @@ function getNodeClass(isSelected: boolean) {
 }
 
 export default async function AdminCategoriesPage({ searchParams }: AdminCategoriesPageProps) {
-  const supabase = await createClient();
-  await requireAdminOrRedirect(supabase, "/admin/categories");
-
   const params = searchParams ? await searchParams : undefined;
+  const selectedIds = {
+    l1: params?.l1,
+    l2: params?.l2,
+    l3: params?.l3,
+  };
+  const nextPath = categoryHref(3, selectedIds);
+
+  const supabase = await createClient();
+  await requireAdminOrRedirect(supabase, nextPath);
   const errorMessage = params?.error ? ERROR_MESSAGE[params.error] : null;
   const successMessage = params?.success ? SUCCESS_MESSAGE[params.success] : null;
 
@@ -148,6 +154,9 @@ export default async function AdminCategoriesPage({ searchParams }: AdminCategor
 
   const selectedSiblings = selectedCategory ? siblingInfo.get(selectedCategory.id) : null;
   const selectedParentPath = selectedCategory ? parentPathLabel(selectedCategory.id) : "";
+  const selectedL1Id = selectedL1?.id ?? "";
+  const selectedL2Id = selectedL2?.id ?? "";
+  const selectedL3Id = selectedL3?.id ?? "";
 
   return (
     <main className="mx-auto w-full max-w-[1680px] px-4 py-4 sm:px-6 lg:px-8">
@@ -175,6 +184,9 @@ export default async function AdminCategoriesPage({ searchParams }: AdminCategor
           </CardHeader>
           <CardContent>
             <form action={createCategoryAction} className="space-y-3">
+              <input type="hidden" name="l1" value={selectedL1Id} />
+              <input type="hidden" name="l2" value={selectedL2Id} />
+              <input type="hidden" name="l3" value={selectedL3Id} />
               <div className="space-y-1">
                 <label htmlFor="newCategoryName" className="korean-display text-sm text-muted-foreground">
                   이름
@@ -315,6 +327,9 @@ export default async function AdminCategoriesPage({ searchParams }: AdminCategor
                       <form action={moveCategoryAction}>
                         <input type="hidden" name="id" value={selectedCategory.id} />
                         <input type="hidden" name="direction" value="up" />
+                        <input type="hidden" name="l1" value={selectedL1Id} />
+                        <input type="hidden" name="l2" value={selectedL2Id} />
+                        <input type="hidden" name="l3" value={selectedL3Id} />
                         <Button type="submit" variant="outline" className="h-8 rounded-none px-2.5" disabled={(selectedSiblings?.index ?? 0) === 0}>
                           ↑
                         </Button>
@@ -322,6 +337,9 @@ export default async function AdminCategoriesPage({ searchParams }: AdminCategor
                       <form action={moveCategoryAction}>
                         <input type="hidden" name="id" value={selectedCategory.id} />
                         <input type="hidden" name="direction" value="down" />
+                        <input type="hidden" name="l1" value={selectedL1Id} />
+                        <input type="hidden" name="l2" value={selectedL2Id} />
+                        <input type="hidden" name="l3" value={selectedL3Id} />
                         <Button
                           type="submit"
                           variant="outline"
@@ -336,6 +354,9 @@ export default async function AdminCategoriesPage({ searchParams }: AdminCategor
 
                   <form key={`edit-form-${selectedCategory.id}`} action={updateCategoryAction} className="space-y-3">
                     <input type="hidden" name="id" value={selectedCategory.id} />
+                    <input type="hidden" name="l1" value={selectedL1Id} />
+                    <input type="hidden" name="l2" value={selectedL2Id} />
+                    <input type="hidden" name="l3" value={selectedL3Id} />
                     <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                       <Input key={`edit-name-${selectedCategory.id}`} name="name" defaultValue={selectedCategory.name} className="h-10 rounded-none" required />
                       <Input
@@ -366,6 +387,9 @@ export default async function AdminCategoriesPage({ searchParams }: AdminCategor
                   <div className="flex justify-end">
                     <form action={deleteCategoryAction}>
                       <input type="hidden" name="id" value={selectedCategory.id} />
+                      <input type="hidden" name="l1" value={selectedL1Id} />
+                      <input type="hidden" name="l2" value={selectedL2Id} />
+                      <input type="hidden" name="l3" value={selectedL3Id} />
                       <Button type="submit" variant="outline" className="h-9 rounded-none px-4 text-destructive hover:text-destructive">
                         삭제
                       </Button>

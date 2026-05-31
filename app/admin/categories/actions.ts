@@ -10,6 +10,30 @@ function basePath() {
   return "/admin/categories";
 }
 
+function readSelectedPath(formData: FormData) {
+  const l1 = String(formData.get("l1") ?? "").trim();
+  const l2 = String(formData.get("l2") ?? "").trim();
+  const l3 = String(formData.get("l3") ?? "").trim();
+  return { l1, l2, l3 };
+}
+
+function buildRedirectPath(formData: FormData, extra?: Record<string, string>) {
+  const query = new URLSearchParams();
+  const { l1, l2, l3 } = readSelectedPath(formData);
+
+  if (l1) query.set("l1", l1);
+  if (l2) query.set("l2", l2);
+  if (l3) query.set("l3", l3);
+  if (extra) {
+    Object.entries(extra).forEach(([key, value]) => {
+      if (value) query.set(key, value);
+    });
+  }
+
+  const encoded = query.toString();
+  return encoded ? `${basePath()}?${encoded}` : basePath();
+}
+
 type CategoryNode = {
   id: string;
   parentId: string | null;
@@ -53,7 +77,7 @@ export async function createCategoryAction(formData: FormData) {
   const parentId = parentRaw && parentRaw !== "none" ? parentRaw : null;
 
   if (!name) {
-    redirect(`${basePath()}?error=required_name`);
+    redirect(buildRedirectPath(formData, { error: "required_name" }));
   }
 
   try {
@@ -70,7 +94,7 @@ export async function createCategoryAction(formData: FormData) {
       );
       const parentDepth = computeDepth(parentId, byId);
       if (parentDepth + 1 > 3) {
-        redirect(`${basePath()}?error=depth_exceeded`);
+        redirect(buildRedirectPath(formData, { error: "depth_exceeded" }));
       }
     }
 
@@ -81,10 +105,10 @@ export async function createCategoryAction(formData: FormData) {
       parentId,
     });
   } catch {
-    redirect(`${basePath()}?error=create_failed`);
+    redirect(buildRedirectPath(formData, { error: "create_failed" }));
   }
 
-  redirect(`${basePath()}?success=created`);
+  redirect(buildRedirectPath(formData, { success: "created" }));
 }
 
 export async function updateCategoryAction(formData: FormData) {
@@ -100,10 +124,10 @@ export async function updateCategoryAction(formData: FormData) {
   const parentId = parentRaw && parentRaw !== "none" ? parentRaw : null;
 
   if (!id || !name) {
-    redirect(`${basePath()}?error=required_name`);
+    redirect(buildRedirectPath(formData, { error: "required_name" }));
   }
   if (parentId === id) {
-    redirect(`${basePath()}?error=invalid_parent`);
+    redirect(buildRedirectPath(formData, { error: "invalid_parent" }));
   }
 
   if (parentId) {
@@ -129,10 +153,10 @@ export async function updateCategoryAction(formData: FormData) {
         });
       }
       if (descendants.has(parentId)) {
-        redirect(`${basePath()}?error=invalid_parent`);
+        redirect(buildRedirectPath(formData, { error: "invalid_parent" }));
       }
     } catch {
-      redirect(`${basePath()}?error=update_failed`);
+      redirect(buildRedirectPath(formData, { error: "update_failed" }));
     }
   }
 
@@ -160,7 +184,7 @@ export async function updateCategoryAction(formData: FormData) {
     const nextSelfDepth = nextParentDepth + 1;
     const nextDeepestDepth = nextSelfDepth + subtreeHeight;
     if (nextDeepestDepth > 3) {
-      redirect(`${basePath()}?error=depth_exceeded`);
+      redirect(buildRedirectPath(formData, { error: "depth_exceeded" }));
     }
 
     await updateCategoryById(writeClient, id, {
@@ -170,10 +194,10 @@ export async function updateCategoryAction(formData: FormData) {
       parentId,
     });
   } catch {
-    redirect(`${basePath()}?error=update_failed`);
+    redirect(buildRedirectPath(formData, { error: "update_failed" }));
   }
 
-  redirect(`${basePath()}?success=updated`);
+  redirect(buildRedirectPath(formData, { success: "updated" }));
 }
 
 export async function deleteCategoryAction(formData: FormData) {
@@ -182,15 +206,15 @@ export async function deleteCategoryAction(formData: FormData) {
   const writeClient = createAdminClient() ?? supabase;
 
   const id = String(formData.get("id") ?? "").trim();
-  if (!id) redirect(`${basePath()}?error=delete_failed`);
+  if (!id) redirect(buildRedirectPath(formData, { error: "delete_failed" }));
 
   try {
     await deleteCategoryById(writeClient, id);
   } catch {
-    redirect(`${basePath()}?error=delete_failed`);
+    redirect(buildRedirectPath(formData, { error: "delete_failed" }));
   }
 
-  redirect(`${basePath()}?success=deleted`);
+  redirect(buildRedirectPath(formData, { success: "deleted" }));
 }
 
 export async function moveCategoryAction(formData: FormData) {
@@ -203,14 +227,14 @@ export async function moveCategoryAction(formData: FormData) {
   const direction = directionRaw === "up" ? "up" : directionRaw === "down" ? "down" : null;
 
   if (!id || !direction) {
-    redirect(`${basePath()}?error=move_failed`);
+    redirect(buildRedirectPath(formData, { error: "move_failed" }));
   }
 
   try {
     await moveCategoryById(writeClient, id, direction);
   } catch {
-    redirect(`${basePath()}?error=move_failed`);
+    redirect(buildRedirectPath(formData, { error: "move_failed" }));
   }
 
-  redirect(`${basePath()}?success=moved`);
+  redirect(buildRedirectPath(formData, { success: "moved" }));
 }

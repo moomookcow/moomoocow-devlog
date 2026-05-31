@@ -46,8 +46,11 @@ async function uploadThumbnailFile(file: File, authorKey: string) {
 }
 
 export async function createPostAction(formData: FormData) {
+  const editingSlug = String(formData.get("slug") ?? "").trim();
+  const nextPath = editingSlug ? `/admin/new?slug=${encodeURIComponent(editingSlug)}` : "/admin/new";
+
   const supabase = await createClient();
-  const user = await requireAdminOrRedirect(supabase, "/admin/new");
+  const user = await requireAdminOrRedirect(supabase, nextPath);
   const adminClient = createAdminClient();
   const writeClient = adminClient ?? supabase;
 
@@ -57,7 +60,6 @@ export async function createPostAction(formData: FormData) {
   const publishTitle = String(formData.get("publishTitle") ?? "").trim();
   const publishSummary = String(formData.get("publishSummary") ?? "").trim();
   const publishSlug = String(formData.get("publishSlug") ?? "").trim();
-  const editingSlug = String(formData.get("slug") ?? "").trim();
   const publishThumbnailUrl = String(formData.get("publishThumbnailUrl") ?? "").trim();
   const publishVisibilityRaw = String(formData.get("publishVisibility") ?? "public");
   const publishVisibility = publishVisibilityRaw === "private" ? "private" : "public";
@@ -155,12 +157,14 @@ export async function createPostAction(formData: FormData) {
 }
 
 export async function deletePostAction(formData: FormData) {
+  const slug = String(formData.get("slug") ?? "").trim();
+  const nextPath = slug ? `/admin/posts/${encodeURIComponent(slug)}` : "/admin";
+
   const supabase = await createClient();
-  await requireAdminOrRedirect(supabase, "/admin");
+  await requireAdminOrRedirect(supabase, nextPath);
   const adminClient = createAdminClient();
   const writeClient = adminClient ?? supabase;
 
-  const slug = String(formData.get("slug") ?? "").trim();
   const confirmTitle = String(formData.get("confirmTitle") ?? "").trim();
 
   if (!slug) {

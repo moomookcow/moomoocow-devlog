@@ -133,10 +133,10 @@ function formatCategoryLabel(value: string | null) {
 }
 
 export default async function AdminPostDetailPage({ params, searchParams }: AdminPostDetailPageProps) {
-  const supabase = await createClient();
-  await requireAdminOrRedirect(supabase, "/admin");
-
   const { slug } = await params;
+
+  const supabase = await createClient();
+  await requireAdminOrRedirect(supabase, `/admin/posts/${encodeURIComponent(slug)}`);
   const post = await getPostBySlug(supabase, slug);
 
   if (!post) {

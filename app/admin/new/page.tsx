@@ -40,13 +40,15 @@ const SUCCESS_MESSAGE: Record<string, string> = {
 };
 
 export default async function AdminNewPage({ searchParams }: AdminNewPageProps) {
-  const supabase = await createClient();
-  await requireAdminOrRedirect(supabase, "/admin/new");
-
   const params = searchParams ? await searchParams : undefined;
+  const targetSlug = String(params?.slug ?? "").trim();
+  const nextPath = targetSlug ? `/admin/new?slug=${encodeURIComponent(targetSlug)}` : "/admin/new";
+
+  const supabase = await createClient();
+  await requireAdminOrRedirect(supabase, nextPath);
+
   const errorMessage = params?.error ? ERROR_MESSAGE[params.error] : null;
   const successMessage = params?.success ? SUCCESS_MESSAGE[params.success] : null;
-  const targetSlug = String(params?.slug ?? "").trim();
   const initialPost = targetSlug ? await getPostBySlug(supabase, targetSlug) : null;
   const finalErrorMessage = targetSlug && !initialPost ? ERROR_MESSAGE.post_not_found : errorMessage;
   let categoryOptions = [] as Array<{ id: string; value: string; label: string; parentId: string | null }>;
