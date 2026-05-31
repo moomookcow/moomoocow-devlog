@@ -336,7 +336,18 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
       <ScrollProgressBar className="pointer-events-none fixed top-0 left-0 z-30 h-1 w-full" />
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
         <aside className="order-3 self-start space-y-4 lg:order-1 lg:sticky lg:top-4">
-          <Suspense fallback={<CategoryPanel groups={sharedCategoryGroups} stickyMode />}>
+          <Suspense
+            fallback={
+              <Card className="surface-panel rounded-none">
+                <CardContent className="space-y-2 p-3">
+                  <div className="h-6 w-28 animate-pulse bg-muted/40" />
+                  <div className="h-5 w-full animate-pulse bg-muted/30" />
+                  <div className="h-5 w-5/6 animate-pulse bg-muted/30" />
+                  <div className="h-5 w-4/6 animate-pulse bg-muted/30" />
+                </CardContent>
+              </Card>
+            }
+          >
             <DeferredCategoryPanel />
           </Suspense>
         </aside>
