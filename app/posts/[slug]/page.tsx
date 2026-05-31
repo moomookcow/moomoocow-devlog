@@ -207,6 +207,111 @@ function createHeadingRenderers() {
   };
 }
 
+async function DeferredCategoryPanel() {
+  const [publishedPosts, categories] = await Promise.all([
+    getPublishedPostSummariesCached(80),
+    getActiveCategoriesCached(120).catch(() => null),
+  ]);
+
+  let categoryGroups = sharedCategoryGroups;
+  try {
+    if (categories) {
+      const groups = buildCategoryPanelGroups(categories, publishedPosts, { hrefBase: "/posts" });
+      if (groups.length > 0) {
+        categoryGroups = groups;
+      }
+    }
+  } catch {
+    categoryGroups = sharedCategoryGroups;
+  }
+
+  return <CategoryPanel groups={categoryGroups} stickyMode />;
+}
+
+async function DeferredRelatedPostsSection({
+  slug,
+  category,
+}: {
+  slug: string;
+  category: string | null;
+}) {
+  const publishedPosts = await getPublishedPostSummariesCached(80);
+  const currentIndex = publishedPosts.findIndex((item) => item.slug === slug);
+  const nextPost = currentIndex > 0 ? publishedPosts[currentIndex - 1] : null;
+  const prevPost =
+    currentIndex >= 0 && currentIndex < publishedPosts.length - 1
+      ? publishedPosts[currentIndex + 1]
+      : null;
+  const sameCategoryPosts = category
+    ? publishedPosts.filter((item) => item.category === category)
+    : [];
+  const categoryLabel = formatCategoryLabel(category);
+
+  return (
+    <>
+      {category ? (
+        <Accordion multiple defaultValue={["same-category"]} className="w-full border-t border-border/60 pt-2">
+          <AccordionItem value="same-category" className="border-b-0">
+            <AccordionTrigger className="korean-display rounded-none px-1 py-1 text-xl hover:no-underline sm:text-2xl">
+              같은 카테고리 글 · {categoryLabel}
+            </AccordionTrigger>
+            <AccordionContent className="pb-0 [&_a]:no-underline">
+              {sameCategoryPosts.length > 0 ? (
+                <ul className="space-y-1">
+                  {sameCategoryPosts.slice(0, 12).map((item) => {
+                    const isCurrent = item.slug === slug;
+                    return (
+                      <li key={item.id}>
+                        <Link
+                          href={`/posts/${encodeURIComponent(item.slug)}`}
+                          aria-current={isCurrent ? "page" : undefined}
+                          className={cn(
+                            "korean-display block rounded-none px-1 py-1 text-xl no-underline sm:text-2xl",
+                            isCurrent ? "font-bold text-foreground" : "text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          {item.title}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="korean-display px-1 py-1 text-xl text-muted-foreground sm:text-2xl">
+                  같은 카테고리 글이 아직 없습니다.
+                </p>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      ) : null}
+      <Card className="surface-panel rounded-none">
+        <CardHeader>
+          <CardTitle className="korean-display text-2xl">이전/다음 포스트</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-2 sm:grid-cols-2">
+          <Link
+            href={prevPost ? `/posts/${encodeURIComponent(prevPost.slug)}` : "#"}
+            aria-disabled={!prevPost}
+            className="surface-subtle block rounded-none p-3 hover:opacity-90 aria-disabled:pointer-events-none aria-disabled:opacity-50"
+          >
+            <p className="font-mono text-xs text-muted-foreground">PREV</p>
+            <p className="korean-display mt-1 line-clamp-2 text-lg">{prevPost?.title ?? "이전 포스트 없음"}</p>
+          </Link>
+          <Link
+            href={nextPost ? `/posts/${encodeURIComponent(nextPost.slug)}` : "#"}
+            aria-disabled={!nextPost}
+            className="surface-subtle block rounded-none p-3 hover:opacity-90 aria-disabled:pointer-events-none aria-disabled:opacity-50"
+          >
+            <p className="font-mono text-xs text-muted-foreground">NEXT</p>
+            <p className="korean-display mt-1 line-clamp-2 text-lg">{nextPost?.title ?? "다음 포스트 없음"}</p>
+          </Link>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
 export default async function PublicPostDetailPage({ params, searchParams }: PublicPostPageProps) {
   const supabase = createPublicClient();
   const { slug } = await params;
@@ -221,61 +326,19 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
     // no-op: 조회수 집계 실패가 본문 렌더를 막지 않도록 한다.
   });
 
-  const [publishedPosts, categories] = await Promise.all([
-    getPublishedPostSummariesCached(80),
-    getActiveCategoriesCached(120).catch(() => null),
-  ]);
-
-  let categoryGroups = sharedCategoryGroups;
-  try {
-    if (categories) {
-    const groups = buildCategoryPanelGroups(categories, publishedPosts, { hrefBase: "/posts" });
-    if (groups.length > 0) {
-      categoryGroups = groups;
-    }
-    }
-  } catch {
-    categoryGroups = sharedCategoryGroups;
-  }
-  const currentIndex = publishedPosts.findIndex((item) => item.slug === post.slug);
-  const nextPost = currentIndex > 0 ? publishedPosts[currentIndex - 1] : null;
-  const prevPost =
-    currentIndex >= 0 && currentIndex < publishedPosts.length - 1
-      ? publishedPosts[currentIndex + 1]
-      : null;
   const readingMinutes = estimateReadMinutes(post.contentMdx);
   const authorName = formatAuthorName(post.authorEmail);
-  const categoryLabel = formatCategoryLabel(post.category);
-  const sameCategoryPosts = post.category
-    ? publishedPosts.filter((item) => item.category === post.category)
-    : [];
   const headingRenderers = createHeadingRenderers();
 
   return (
     <main className="relative mx-auto w-full max-w-[1680px] px-4 py-4 sm:px-6 lg:px-8">
-      {post.thumbnailUrl ? (
-        <div
-          className="pointer-events-none absolute inset-y-0 left-0 right-0 -z-10 overflow-hidden"
-          aria-hidden="true"
-        >
-          <div className="relative h-full w-full">
-            <NextImage
-              src={post.thumbnailUrl}
-              alt=""
-              fill
-              sizes="(max-width: 768px) 96vw, (max-width: 1280px) 72vw, 900px"
-              quality={40}
-              className="object-cover opacity-68 blur-0"
-            />
-            <div className="absolute inset-0 bg-background/46" />
-          </div>
-        </div>
-      ) : null}
       <AutoScrollBottom enabled={shouldJumpToBottom} />
       <ScrollProgressBar className="pointer-events-none fixed top-0 left-0 z-30 h-1 w-full" />
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_320px]">
         <aside className="order-3 self-start space-y-4 lg:order-1 lg:sticky lg:top-4">
-          <CategoryPanel groups={categoryGroups} stickyMode />
+          <Suspense fallback={<CategoryPanel groups={sharedCategoryGroups} stickyMode />}>
+            <DeferredCategoryPanel />
+          </Suspense>
         </aside>
 
         <article className="order-2 min-w-0 space-y-3">
@@ -303,42 +366,6 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
                   </Link>
                 ))}
               </div>
-              {post.category ? (
-                <Accordion multiple defaultValue={["same-category"]} className="w-full border-t border-border/60 pt-2">
-                  <AccordionItem value="same-category" className="border-b-0">
-                    <AccordionTrigger className="korean-display rounded-none px-1 py-1 text-xl hover:no-underline sm:text-2xl">
-                      같은 카테고리 글 · {categoryLabel}
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-0 [&_a]:no-underline">
-                      {sameCategoryPosts.length > 0 ? (
-                        <ul className="space-y-1">
-                          {sameCategoryPosts.slice(0, 12).map((item) => {
-                            const isCurrent = item.slug === post.slug;
-                            return (
-                              <li key={item.id}>
-                                <Link
-                                  href={`/posts/${encodeURIComponent(item.slug)}`}
-                                  aria-current={isCurrent ? "page" : undefined}
-                                  className={cn(
-                                    "korean-display block rounded-none px-1 py-1 text-xl no-underline sm:text-2xl",
-                                    isCurrent ? "font-bold text-foreground" : "text-muted-foreground hover:text-foreground",
-                                  )}
-                                >
-                                  {item.title}
-                                </Link>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      ) : (
-                        <p className="korean-display px-1 py-1 text-xl text-muted-foreground sm:text-2xl">
-                          같은 카테고리 글이 아직 없습니다.
-                        </p>
-                      )}
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              ) : null}
             </CardHeader>
           </Card>
 
@@ -358,29 +385,21 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
             </CardContent>
           </Card>
 
-          <Card className="surface-panel rounded-none">
-            <CardHeader>
-              <CardTitle className="korean-display text-2xl">이전/다음 포스트</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-2 sm:grid-cols-2">
-              <Link
-                href={prevPost ? `/posts/${encodeURIComponent(prevPost.slug)}` : "#"}
-                aria-disabled={!prevPost}
-                className="surface-subtle block rounded-none p-3 hover:opacity-90 aria-disabled:pointer-events-none aria-disabled:opacity-50"
-              >
-                <p className="font-mono text-xs text-muted-foreground">PREV</p>
-                <p className="korean-display mt-1 line-clamp-2 text-lg">{prevPost?.title ?? "이전 포스트 없음"}</p>
-              </Link>
-              <Link
-                href={nextPost ? `/posts/${encodeURIComponent(nextPost.slug)}` : "#"}
-                aria-disabled={!nextPost}
-                className="surface-subtle block rounded-none p-3 hover:opacity-90 aria-disabled:pointer-events-none aria-disabled:opacity-50"
-              >
-                <p className="font-mono text-xs text-muted-foreground">NEXT</p>
-                <p className="korean-display mt-1 line-clamp-2 text-lg">{nextPost?.title ?? "다음 포스트 없음"}</p>
-              </Link>
-            </CardContent>
-          </Card>
+          <Suspense
+            fallback={
+              <Card className="surface-panel rounded-none">
+                <CardHeader>
+                  <CardTitle className="korean-display text-2xl">이전/다음 포스트</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-2 sm:grid-cols-2">
+                  <div className="surface-subtle h-20 animate-pulse rounded-none" />
+                  <div className="surface-subtle h-20 animate-pulse rounded-none" />
+                </CardContent>
+              </Card>
+            }
+          >
+            <DeferredRelatedPostsSection slug={post.slug} category={post.category} />
+          </Suspense>
 
           <Suspense
             fallback={
