@@ -26,7 +26,7 @@ export const revalidate = 120;
 
 type PublicPostPageProps = {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ comment_error?: string; comment_success?: string; jump?: string; showComments?: string }>;
+  searchParams?: Promise<{ comment_error?: string; comment_success?: string; jump?: string }>;
 };
 
 const SUPABASE_STORAGE_PUBLIC_PATH = "/storage/v1/object/public/post-thumbnails/";
@@ -214,7 +214,6 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
   const commentError = search?.comment_error ? COMMENT_ERROR_MESSAGE[search.comment_error] : null;
   const commentSuccess = search?.comment_success === "1";
   const shouldJumpToBottom = search?.jump === "bottom";
-  const shouldShowComments = search?.showComments === "1" || commentSuccess || Boolean(commentError);
 
   const post = await getPublishedPostBySlugCached(slug);
   if (!post) notFound();
@@ -384,30 +383,23 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
           </Card>
 
           <Suspense
-            fallback={null}
-          >
-            {shouldShowComments ? (
-              <PublicCommentsCard
-                postId={post.id}
-                slug={post.slug}
-                commentError={commentError ?? null}
-                commentSuccess={commentSuccess}
-              />
-            ) : (
-              <Card id="comments" className="surface-panel rounded-none">
+            fallback={
+              <Card className="surface-panel rounded-none">
                 <CardHeader>
-                  <CardTitle className="korean-display text-2xl">댓글</CardTitle>
+                  <CardTitle className="korean-display text-2xl">댓글 남기기</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Link
-                    href={`/posts/${encodeURIComponent(post.slug)}?showComments=1#comments`}
-                    className="korean-display inline-flex items-center border border-border px-3 py-2 text-base hover:opacity-85"
-                  >
-                    댓글 불러오기
-                  </Link>
+                <CardContent className="space-y-2">
+                  <div className="h-24 w-full animate-pulse bg-muted/40" />
                 </CardContent>
               </Card>
-            )}
+            }
+          >
+            <PublicCommentsCard
+              postId={post.id}
+              slug={post.slug}
+              commentError={commentError ?? null}
+              commentSuccess={commentSuccess}
+            />
           </Suspense>
         </article>
 
