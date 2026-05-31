@@ -167,10 +167,10 @@ function MarkdownImage({ src, alt }: { src?: string | Blob; alt?: string }) {
         <NextImage
           src={src}
           alt={alt ?? "markdown image"}
-          width={1600}
-          height={900}
-          sizes="(max-width: 1024px) 100vw, 70vw"
-          quality={60}
+          width={1280}
+          height={720}
+          sizes="(max-width: 768px) 92vw, (max-width: 1280px) 78vw, 960px"
+          quality={50}
           className="h-auto w-full object-contain"
         />
       </span>
@@ -263,8 +263,8 @@ export default async function PublicPostDetailPage({ params, searchParams }: Pub
               src={post.thumbnailUrl}
               alt=""
               fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 85vw, 60vw"
-              quality={50}
+              sizes="(max-width: 768px) 96vw, (max-width: 1280px) 72vw, 900px"
+              quality={40}
               className="object-cover opacity-68 blur-0"
             />
             <div className="absolute inset-0 bg-background/46" />
