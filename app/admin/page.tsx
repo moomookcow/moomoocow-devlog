@@ -116,7 +116,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <aside className="min-w-0 self-start space-y-4">
           <CategoryPanel groups={categoryGroups} />
         </aside>
-        <div className="min-w-0">
+        <div className="min-w-0 lg:col-span-2">
           <AdminDashboardClient
             posts={posts.map((post) => ({
               id: post.id,

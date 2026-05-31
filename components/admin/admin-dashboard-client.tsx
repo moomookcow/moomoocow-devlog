@@ -112,7 +112,7 @@ export default function AdminDashboardClient({
   ];
 
   return (
-    <div className="space-y-3">
+    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
       <section className="min-w-0 space-y-3">
         <Card className="surface-panel rounded-none">
           <CardHeader className="gap-3 sm:flex sm:flex-row sm:items-start sm:justify-between">
@@ -283,7 +283,7 @@ export default function AdminDashboardClient({
         </Card>
       </section>
 
-      <aside className="min-w-0 lg:sticky lg:top-24">
+      <aside className="min-w-0 self-start lg:sticky lg:top-24">
         <RightFeedPanel
           panelTitle="피드 패널"
           searchPlaceholder="어드민 글 검색"
