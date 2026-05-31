@@ -3,6 +3,25 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
   const requestUrl = new URL(request.url);
+  const canonicalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+  if (canonicalSiteUrl && process.env.NODE_ENV === "production") {
+    try {
+      const canonical = new URL(canonicalSiteUrl);
+      const isAdminOrAuthPath =
+        requestUrl.pathname === "/admin" ||
+        requestUrl.pathname.startsWith("/admin/") ||
+        requestUrl.pathname === "/auth/confirm";
+
+      if (isAdminOrAuthPath && requestUrl.host !== canonical.host) {
+        const redirectUrl = new URL(requestUrl.pathname + requestUrl.search, canonical.origin);
+        return NextResponse.redirect(redirectUrl);
+      }
+    } catch {
+      // ignore invalid NEXT_PUBLIC_SITE_URL
+    }
+  }
+
   const hasAuthCode = requestUrl.searchParams.has("code");
   const hasOtpToken =
     requestUrl.searchParams.has("token_hash") && requestUrl.searchParams.has("type");
